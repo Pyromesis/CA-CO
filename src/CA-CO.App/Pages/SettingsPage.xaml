@@ -93,6 +93,42 @@
                             VerticalAlignment="Center"
                             FontSize="16"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE895;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Actualizaciones" />
+                    </StackPanel>
+                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                        <Run Text="Versión instalada: " />
+                        <Run Text="{x:Bind ViewModel.CurrentVersionText, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Text="{x:Bind ViewModel.UpdateStatus, Mode=OneWay}" TextWrapping="Wrap" />
+                    <ProgressBar
+                        Maximum="100"
+                        Value="{x:Bind ViewModel.UpdateProgress, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsUpdateBusy, Mode=OneWay}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="{x:Bind ViewModel.UpdateNotes, Mode=OneWay}"
+                        TextWrapping="Wrap"
+                        Visibility="{x:Bind ViewModel.HasUpdate, Mode=OneWay}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Command="{x:Bind ViewModel.CheckForUpdatesCommand, Mode=OneWay}" Content="Comprobar ahora" />
+                        <Button
+                            Command="{x:Bind ViewModel.DownloadAndInstallCommand, Mode=OneWay}"
+                            Content="Descargar e instalar"
+                            IsEnabled="{x:Bind ViewModel.HasUpdate, Mode=OneWay}"
+                            Style="{StaticResource AccentButtonStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Glyph="&#xE72E;" />
                         <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Privacidad" />
                     </StackPanel>

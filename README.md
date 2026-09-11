@@ -32,7 +32,10 @@ Tipos soportados en Fase 0: **PDF, PNG, JPG, JPEG, DOCX, XLSX, TXT**.
 - Biblioteca local auto-creada al primer arranque, reubicable a cualquier carpeta
   elegida (con acceso persistente) o a la ubicación interna por defecto.
 - Logging a archivo, manejo centralizado de errores, ajustes persistentes.
-- 53 pruebas automatizadas.
+- **Actualizaciones integradas**: Configuración → Actualizaciones comprueba
+  GitHub Releases, descarga el instalador con progreso, verifica su firma
+  y actualiza reabriendo la app.
+- 74 pruebas automatizadas.
 
 ## Tecnologías
 

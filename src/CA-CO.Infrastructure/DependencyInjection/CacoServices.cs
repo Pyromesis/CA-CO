@@ -14,6 +14,7 @@ using CaCo.Infrastructure.Persistence.Sqlite;
 using CaCo.Infrastructure.Persistence;
 using CaCo.Infrastructure.Search;
 using CaCo.Infrastructure.Storage;
+using CaCo.Infrastructure.Updates;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -76,6 +77,9 @@ public static class CacoServiceCollectionExtensions
 
         // Errores.
         services.AddSingleton<IErrorHandler, AppErrorHandler>();
+
+        // Actualizaciones desde GitHub Releases.
+        services.AddSingleton<Application.Updates.IUpdateService, GitHubUpdateService>();
 
         return services;
     }

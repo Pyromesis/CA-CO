@@ -4,7 +4,7 @@
 ; Compilar: ISCC.exe /S"casign=..." installer\CA-CO.iss
 ;   (o .\installer\Build-Installer.ps1 que lo hace todo)
 ; =============================================================
-#define AppVersion "1.0.0"
+#define AppVersion "1.1.0"
 #define Staging "staging\CA-CO"
 
 [Setup]
@@ -114,7 +114,14 @@ begin
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  Code: Integer;
 begin
+  if (CurStep = ssDone) and (ExpandConstant('{param:relaunch|0}') = '1') then
+  begin
+    { Actualización desde la app: reabrir al terminar (el instalador ya cerró la anterior). }
+    Exec(ExpandConstant('{app}\CaCo.App.exe'), '', '', SW_SHOW, ewNoWait, Code);
+  end;
   if CurStep = ssPostInstall then
   begin
     { Actualizacion con cambio de carpeta: la instalacion anterior queda
