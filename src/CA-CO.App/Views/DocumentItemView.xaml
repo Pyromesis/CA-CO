@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="CaCo.App.Views.DocumentItemView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid
+        Padding="12"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        ColumnSpacing="12"
+        CornerRadius="12">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Grid
+            Width="44"
+            Height="44"
+            VerticalAlignment="Center">
+            <FontIcon
+                x:Name="TypeIcon"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="24"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Glyph="&#xE8A5;" />
+            <Border CornerRadius="8">
+                <Image
+                    Width="44"
+                    Height="44"
+                    VerticalAlignment="Center"
+                    Source="{x:Bind ThumbnailImage, Mode=OneWay}"
+                    Stretch="UniformToFill" />
+            </Border>
+        </Grid>
+
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+            <TextBlock
+                FontWeight="SemiBold"
+                Text="{x:Bind Title, Mode=OneWay}"
+                TextTrimming="CharacterEllipsis" />
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{x:Bind Subtitle, Mode=OneWay}"
+                TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+
+        <StackPanel
+            Grid.Column="2"
+            VerticalAlignment="Center"
+            Orientation="Horizontal"
+            Spacing="4">
+            <Button
+                x:Name="FavoriteButton"
+                AutomationProperties.Name="Favorito"
+                Command="{x:Bind ViewModel.ToggleFavoriteCommand, Mode=OneWay}"
+                CommandParameter="{x:Bind Document, Mode=OneWay}"
+                Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="Marcar como favorito">
+                <FontIcon
+                    x:Name="FavIcon"
+                    FontSize="16"
+                    Glyph="&#xE735;" />
+            </Button>
+            <Button
+                AutomationProperties.Name="Renombrar"
+                Command="{x:Bind ViewModel.RenameCommand, Mode=OneWay}"
+                CommandParameter="{x:Bind Document, Mode=OneWay}"
+                Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="Renombrar">
+                <FontIcon FontSize="16" Glyph="&#xE70F;" />
+            </Button>
+            <Button
+                x:Name="TrashButton"
+                AutomationProperties.Name="Mover a la papelera"
+                Command="{x:Bind ViewModel.MoveToTrashCommand, Mode=OneWay}"
+                CommandParameter="{x:Bind Document, Mode=OneWay}"
+                Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="Mover a la papelera"
+                Visibility="{x:Bind TrashButtonVisibility, Mode=OneWay}">
+                <FontIcon FontSize="16" Glyph="&#xE74D;" />
+            </Button>
+            <Button
+                x:Name="RestoreButton"
+                AutomationProperties.Name="Restaurar"
+                Command="{x:Bind ViewModel.RestoreCommand, Mode=OneWay}"
+                CommandParameter="{x:Bind Document, Mode=OneWay}"
+                Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="Restaurar"
+                Visibility="{x:Bind RestoreButtonVisibility, Mode=OneWay}">
+                <FontIcon FontSize="16" Glyph="&#xE777;" />
+            </Button>
+            <Button
+                x:Name="DeleteButton"
+                AutomationProperties.Name="Eliminar definitivamente"
+                Command="{x:Bind ViewModel.DeletePermanentlyCommand, Mode=OneWay}"
+                CommandParameter="{x:Bind Document, Mode=OneWay}"
+                Style="{StaticResource SubtleButtonStyle}"
+                ToolTipService.ToolTip="Eliminar definitivamente"
+                Visibility="{x:Bind RestoreButtonVisibility, Mode=OneWay}">
+                <FontIcon FontSize="16" Glyph="&#xE74D;" />
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

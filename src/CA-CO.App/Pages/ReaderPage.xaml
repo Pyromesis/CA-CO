@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<local:ReaderPageBase
+    x:Class="CaCo.App.Pages.ReaderPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:domain="using:CaCo.Domain"
+    xmlns:local="using:CaCo.App.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="using:CaCo.App.Views"
+    mc:Ignorable="d">
+
+    <Grid
+        Padding="24,16,24,24"
+        ColumnSpacing="16"
+        RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel
+            Grid.Row="0"
+            Grid.ColumnSpan="2"
+            Spacing="8">
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasInfo, Mode=OneWay}"
+                Message="{x:Bind ViewModel.InfoMessage, Mode=OneWay}"
+                Severity="Success" />
+        </StackPanel>
+
+        <Grid Grid.Row="1" Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button
+                    Command="{x:Bind ViewModel.GoBackCommand, Mode=OneWay}"
+                    ToolTipService.ToolTip="Volver a la biblioteca">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="14" Glyph="&#xE76B;" />
+                        <TextBlock Text="Volver" />
+                    </StackPanel>
+                </Button>
+                <Button
+                    Command="{x:Bind ViewModel.GoToDetailsCommand, Mode=OneWay}"
+                    ToolTipService.ToolTip="Ver ficha del documento">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="14" Glyph="&#xE946;" />
+                        <TextBlock Text="Detalles" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+            <StackPanel
+                Grid.Column="1"
+                Spacing="2">
+                <TextBlock
+                    Style="{StaticResource SubtitleTextBlockStyle}"
+                    Text="{x:Bind ViewModel.Title, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind ViewModel.Subtitle, Mode=OneWay}" />
+            </StackPanel>
+            <StackPanel
+                Grid.Column="2"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    x:Name="ZoomOutButton"
+                    x:Load="{x:Bind ViewModel.IsImage, Mode=OneWay}"
+                    Click="ZoomOut_Click"
+                    Content="−"
+                    ToolTipService.ToolTip="Reducir" />
+                <Button
+                    x:Name="ZoomInButton"
+                    x:Load="{x:Bind ViewModel.IsImage, Mode=OneWay}"
+                    Click="ZoomIn_Click"
+                    Content="+"
+                    ToolTipService.ToolTip="Ampliar" />
+                <Button
+                    Command="{x:Bind ViewModel.OpenExternalCommand, Mode=OneWay}"
+                    ToolTipService.ToolTip="Abrir con la app externa">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="14" Glyph="&#xE8A7;" />
+                        <TextBlock Text="Abrir externo" />
+                    </StackPanel>
+                </Button>
+                <Button
+                    Command="{x:Bind ViewModel.SyncExternalChangesCommand, Mode=OneWay}"
+                    ToolTipService.ToolTip="Relee el archivo (adopta anotaciones guardadas con Ctrl+S en el visor)">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="14" Glyph="&#xE895;" />
+                        <TextBlock Text="Sincronizar" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Documento -->
+        <Grid
+            Grid.Row="2"
+            Grid.Column="0"
+            RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <StackPanel
+                x:Name="ImageTools"
+                x:Load="{x:Bind ViewModel.IsImage, Mode=OneWay}"
+                Orientation="Horizontal"
+                Spacing="8">
+                <ToggleButton
+                    x:Name="PenButton"
+                    Click="PenButton_Click"
+                    Content="Lápiz" />
+                <ToggleButton
+                    x:Name="HighlighterButton"
+                    Click="HighlighterButton_Click"
+                    Content="Resaltador" />
+                <Button Click="UndoStroke_Click" Content="Deshacer" />
+                <Button Click="ClearInk_Click" Content="Borrar tinta" />
+                <Button
+                    Command="{x:Bind ViewModel.ExtractTextCommand, Mode=OneWay}"
+                    Content="Extraer texto (OCR)" />
+                <Button
+                    Click="SaveInk_Click"
+                    Content="Guardar anotación"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
+
+            <StackPanel
+                x:Name="TextTools"
+                x:Load="{x:Bind ViewModel.IsTextDirty, Mode=OneWay}"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Command="{x:Bind ViewModel.SaveTextCommand, Mode=OneWay}"
+                    Content="Guardar cambios"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
+
+            <WebView2
+                x:Name="PdfView"
+                x:Load="{x:Bind ViewModel.IsPdf, Mode=OneWay}"
+                Grid.Row="1"
+                Source="{x:Bind ViewModel.PdfUri, Mode=OneWay}" />
+
+            <ScrollViewer
+                x:Name="ImageZoom"
+                x:Load="{x:Bind ViewModel.IsImage, Mode=OneWay}"
+                Grid.Row="1"
+                HorizontalScrollMode="Auto"
+                VerticalScrollMode="Auto"
+                ZoomMode="Enabled">
+                <Grid x:Name="InkGrid" Background="Transparent">
+                    <Image Source="{x:Bind ViewModel.Image, Mode=OneWay}" Stretch="Uniform" />
+                    <Canvas
+                        x:Name="InkOverlay"
+                        PointerMoved="InkOverlay_PointerMoved"
+                        PointerPressed="InkOverlay_PointerPressed"
+                        PointerReleased="InkOverlay_PointerReleased" />
+                </Grid>
+            </ScrollViewer>
+
+            <TextBox
+                x:Name="TextEditor"
+                x:Load="{x:Bind ViewModel.IsText, Mode=OneWay}"
+                Grid.Row="1"
+                AcceptsReturn="True"
+                FontFamily="Consolas"
+                ScrollViewer.VerticalScrollMode="Auto"
+                Text="{x:Bind ViewModel.TextContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
+
+            <StackPanel
+                x:Name="OtherPlaceholder"
+                x:Load="{x:Bind ViewModel.IsOther, Mode=OneWay}"
+                Grid.Row="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="12">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Vista previa no disponible para este tipo." />
+                <Button
+                    HorizontalAlignment="Center"
+                    Command="{x:Bind ViewModel.OpenExternalCommand, Mode=OneWay}"
+                    Content="Abrir con la app externa"
+                    Style="{StaticResource AccentButtonStyle}" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Comentarios y dictado -->
+        <Border
+            Grid.Row="2"
+            Grid.Column="1"
+            Style="{StaticResource CacoCardBorderStyle}"
+            VerticalAlignment="Stretch">
+            <StackPanel Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Glyph="&#xE77B;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{StaticResource CacoSectionHeaderTextStyle}"
+                        Text="Comentarios" />
+                </StackPanel>
+            <ListView
+                MaxHeight="380"
+                ContainerContentChanging="Comments_ContainerContentChanging"
+                ItemsSource="{x:Bind ViewModel.Comments, Mode=OneWay}"
+                SelectionMode="None">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="0,0,0,8" />
+                        <Setter Property="Padding" Value="0" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemContainerTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition />
+                    </TransitionCollection>
+                </ListView.ItemContainerTransitions>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="domain:Note">
+                        <StackPanel Spacing="4">
+                            <views:CommentView />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    Click="CommentEdit_Click"
+                                    Content="Editar"
+                                    Style="{StaticResource SubtleButtonStyle}" />
+                                <Button
+                                    Click="CommentDelete_Click"
+                                    Content="Eliminar"
+                                    Style="{StaticResource SubtleButtonStyle}" />
+                            </StackPanel>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+            <TextBox
+                AcceptsReturn="True"
+                PlaceholderText="Escribe un comentario…"
+                Text="{x:Bind ViewModel.NewComment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button
+                    Command="{x:Bind ViewModel.AddCommentCommand, Mode=OneWay}"
+                    Content="Añadir"
+                    Style="{StaticResource AccentButtonStyle}" />
+                <Button Command="{x:Bind ViewModel.InsertDateCommand, Mode=OneWay}" Content="Fecha" />
+                <Button
+                    x:Name="DictateButton"
+                    x:Load="{x:Bind ViewModel.IsVoiceIdle, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.StartVoiceCommand, Mode=OneWay}"
+                    Content="Dictar por voz"
+                    IsEnabled="{x:Bind ViewModel.VoiceAvailable, Mode=OneWay}" />
+                <Button
+                    Command="{x:Bind ViewModel.PasteAsCommentCommand, Mode=OneWay}"
+                    Content="Pegar"
+                    ToolTipService.ToolTip="Pega el portapapeles (Ctrl+C en el visor) en el comentario" />
+                <Button
+                    x:Name="SendSelectionButton"
+                    x:Load="{x:Bind ViewModel.IsText, Mode=OneWay}"
+                    Click="SendSelection_Click"
+                    Content="Enviar selección"
+                    ToolTipService.ToolTip="Añade el texto seleccionado al comentario" />
+            </StackPanel>
+            <StackPanel
+                x:Name="VoicePanel"
+                x:Load="{x:Bind ViewModel.ShowVoicePanel, Mode=OneWay}"
+                Spacing="8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Ellipse
+                        x:Name="LiveDot"
+                        x:Load="{x:Bind ViewModel.IsActivelyRecording, Mode=OneWay}"
+                        Width="10"
+                        Height="10"
+                        VerticalAlignment="Center"
+                        Fill="Red" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="{x:Bind ViewModel.VoiceStatus, Mode=OneWay}" />
+                </StackPanel>
+                <Border
+                    Padding="12,8,12,8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <ScrollViewer MaxHeight="140" VerticalScrollMode="Auto">
+                        <TextBlock TextWrapping="Wrap">
+                            <Run Text="{x:Bind ViewModel.VoiceDraft, Mode=OneWay}" />
+                            <Run
+                                FontStyle="Italic"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{x:Bind ViewModel.VoiceLiveDisplay, Mode=OneWay}" />
+                        </TextBlock>
+                    </ScrollViewer>
+                </Border>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button
+                        x:Name="PauseVoiceButton"
+                        x:Load="{x:Bind ViewModel.IsActivelyRecording, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.PauseVoiceCommand, Mode=OneWay}"
+                        Content="Pausar" />
+                    <Button
+                        x:Name="ResumeVoiceButton"
+                        x:Load="{x:Bind ViewModel.IsPaused, Mode=OneWay}"
+                        Command="{x:Bind ViewModel.ResumeVoiceCommand, Mode=OneWay}"
+                        Content="Seguir" />
+                    <Button
+                        Command="{x:Bind ViewModel.FinishVoiceCommand, Mode=OneWay}"
+                        Content="Terminar"
+                        Style="{StaticResource AccentButtonStyle}" />
+                    <Button Command="{x:Bind ViewModel.DiscardVoiceCommand, Mode=OneWay}" Content="Eliminar" />
+                </StackPanel>
+                <ProgressRing IsActive="{x:Bind ViewModel.IsActivelyRecording, Mode=OneWay}" />
+            </StackPanel>
+            <HyperlinkButton
+                Command="{x:Bind ViewModel.OpenLanguageSettingsCommand, Mode=OneWay}"
+                Content="Abrir ajustes de idioma (manual)" />
+            <HyperlinkButton
+                Command="{x:Bind ViewModel.OpenSpeechPrivacyCommand, Mode=OneWay}"
+                Content="Permitir voz en Privacidad" />
+            <Button
+                Command="{x:Bind ViewModel.InstallLanguageFeaturesCommand, Mode=OneWay}"
+                Content="Instalar voz y OCR" />
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="El dictado usa la voz del sistema (offline si el paquete de español está instalado)."
+                TextWrapping="Wrap" />
+            <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</local:ReaderPageBase>

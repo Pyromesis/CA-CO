@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Icono provisional de CA-CO (Fase 0). Sustituir por el set MSIX definitivo. -->
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="#0078D4"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M34 44h60M34 60h60M34 76h38"/>
+    <circle cx="88" cy="82" r="14"/>
+    <path d="M98 92l12 12"/>
+  </g>
+</svg>

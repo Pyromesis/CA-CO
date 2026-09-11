@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>CaCo.Domain</RootNamespace>
+    <Description>Entidades del dominio de CA-CO. Sin dependencias de infraestructura.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CA-CO.Core\CaCo.Core.csproj" />
+  </ItemGroup>
+
+</Project>

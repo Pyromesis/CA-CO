@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="CaCo.App.Views.CommentView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid ColumnSpacing="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Border
+            Width="32"
+            Height="32"
+            VerticalAlignment="Top"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            CornerRadius="16">
+            <FontIcon
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Glyph="&#xE77B;" />
+        </Border>
+        <StackPanel
+            Grid.Column="1"
+            Padding="12"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Spacing="4">
+            <TextBlock Text="{x:Bind Body, Mode=OneWay}" TextWrapping="Wrap" />
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{x:Bind DateText, Mode=OneWay}" />
+        </StackPanel>
+    </Grid>
+</UserControl>

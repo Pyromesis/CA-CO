@@ -1,0 +1,82 @@
+## .NET / Visual Studio
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+artifacts/
+
+# Build logs
+[Ll]og/
+[Ll]ogs/
+*.log
+*.binlog
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+project.lock.json
+
+# MSIX packaging output
+AppPackages/
+BundleArtifacts/
+*.msix
+*.msixupload
+*.appx
+*.appxbundle
+*.appxupload
+
+# Publish output
+publish/
+*.pubxml
+PublishScripts/
+
+# CA-CO: salidas del instalador (se publican en el Release, no en git)
+installer/staging/
+installer/dist/
+
+# Code analysis and tooling
+_ReSharper*/
+*.DotSettings.user
+*.dotCover
+.idea/
+
+# Generated files
+Generated\ Files/
+*_wpftmp.csproj
+
+# Windows Store
+*.cer
+*.pfx
+*_StoreKey.pfx
+*_TemporaryKey.pfx
+
+## CA-CO: datos personales y locales (nunca se suben)
+# Bibliotecas de documentos dentro del repo (si alguien reubica la suya aquí)
+"CA-CO Library/"
+CA-CO-Data/
+*.json.bak
+
+# Configuración y logs locales de la máquina de desarrollo
+# (los settings.json / logs viven en %LOCALAPPDATA%\CA-CO, fuera del repo)
+
+# Sistema operativo y editores
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*~
+.vscode/*
+!.vscode/extensions.json

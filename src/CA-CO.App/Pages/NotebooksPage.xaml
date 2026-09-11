@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<local:NotebooksPageBase
+    x:Class="CaCo.App.Pages.NotebooksPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:domain="using:CaCo.Domain"
+    xmlns:local="using:CaCo.App.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="using:CaCo.App.Views"
+    xmlns:vm="using:CaCo.App.ViewModels"
+    mc:Ignorable="d">
+
+    <Grid
+        Padding="32,24,32,32"
+        RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Spacing="8">
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasInfo, Mode=OneWay}"
+                Message="{x:Bind ViewModel.InfoMessage, Mode=OneWay}"
+                Severity="Success" />
+        </StackPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Style="{StaticResource TitleTextBlockStyle}"
+                    Text="Cuadernos" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.NotebookCount, Mode=OneWay}" />
+            </StackPanel>
+            <StackPanel
+                Grid.Column="1"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button Command="{x:Bind ViewModel.CreateCommand, Mode=OneWay}" Content="Crear" />
+                <Button Command="{x:Bind ViewModel.RenameCommand, Mode=OneWay}" Content="Renombrar" />
+                <Button Command="{x:Bind ViewModel.DeleteCommand, Mode=OneWay}" Content="Eliminar" />
+            </StackPanel>
+        </Grid>
+
+        <Grid
+            Grid.Row="2"
+            ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}" Padding="8">
+                <ListView
+                    ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedRow, Mode=TwoWay}"
+                    SelectionChanged="List_SelectionChanged"
+                    SelectionMode="Single">
+                    <ListView.ItemContainerTransitions>
+                        <TransitionCollection>
+                            <EntranceThemeTransition />
+                        </TransitionCollection>
+                    </ListView.ItemContainerTransitions>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NotebookRow">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind IndentText, Mode=OneWay}" />
+                                <FontIcon
+                                    VerticalAlignment="Center"
+                                    FontSize="18"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Glyph="&#xE8B7;" />
+                                <TextBlock
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind Notebook.Name, Mode=OneWay}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Border>
+
+            <Border
+                Grid.Column="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1,0,0,0" />
+
+            <Border
+                Grid.Column="2"
+                Style="{StaticResource CacoCardBorderStyle}"
+                VerticalAlignment="Stretch">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE8B7;" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource CacoSectionHeaderTextStyle}"
+                            Text="{x:Bind ViewModel.SelectedNotebookName, Mode=OneWay}" />
+                    </StackPanel>
+                    <ListView
+                        ContainerContentChanging="Docs_ContainerContentChanging"
+                        IsItemClickEnabled="True"
+                        ItemClick="Docs_ItemClick"
+                        ItemsSource="{x:Bind ViewModel.SelectedDocuments, Mode=OneWay}"
+                        SelectionMode="None">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Margin" Value="0,0,0,8" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="domain:Document">
+                                <views:RecentDocumentView />
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <ProgressRing
+            Grid.Row="3"
+            HorizontalAlignment="Center"
+            IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+    </Grid>
+</local:NotebooksPageBase>

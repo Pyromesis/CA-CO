@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "CaCo.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "CaCo.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<local:SettingsPageBase
+    x:Class="CaCo.App.Pages.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:CaCo.App.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <ScrollViewer Padding="32,24,32,32">
+        <StackPanel
+            MaxWidth="700"
+            HorizontalAlignment="Left"
+            Spacing="20">
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasInfo, Mode=OneWay}"
+                Message="{x:Bind ViewModel.InfoMessage, Mode=OneWay}"
+                Severity="Success" />
+
+            <StackPanel Spacing="4">
+                <TextBlock
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="CA-CO · OFFLINE-FIRST" />
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Configuración" />
+            </StackPanel>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE771;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="General" />
+                    </StackPanel>
+                    <ComboBox
+                        Header="Tema"
+                        ItemsSource="{x:Bind ViewModel.Themes, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.Theme, Mode=TwoWay}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xEBD3;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Almacenamiento" />
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.StorageSummary, Mode=OneWay}" />
+                    <TextBox
+                        Header="Ubicación de la biblioteca (vacía = por defecto)"
+                        Text="{x:Bind ViewModel.LibraryPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="{x:Bind ViewModel.EffectivePath, Mode=OneWay}" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="{x:Bind ViewModel.RestartNotice, Mode=OneWay}" />
+                    <ToggleSwitch
+                        Header="Conservar copia del archivo original"
+                        IsOn="{x:Bind ViewModel.KeepOriginalCopy, Mode=TwoWay}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            Command="{x:Bind ViewModel.SaveCommand, Mode=OneWay}"
+                            Content="Guardar"
+                            Style="{StaticResource AccentButtonStyle}" />
+                        <Button Command="{x:Bind ViewModel.PickFolderCommand, Mode=OneWay}" Content="Elegir carpeta…" />
+                        <Button Command="{x:Bind ViewModel.OpenLibraryFolderCommand, Mode=OneWay}" Content="Abrir biblioteca" />
+                        <Button Command="{x:Bind ViewModel.UseDefaultLibraryCommand, Mode=OneWay}" Content="Restablecer ubicación" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE72E;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Privacidad" />
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="CA-CO funciona offline-first en este equipo: sin cuentas ni nube. La voz y el OCR usan los motores del sistema."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Spacing="8">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Seguridad (próximamente)" />
+                <ToggleSwitch
+                    Header="Bloqueo con PIN / Windows Hello"
+                    IsEnabled="False"
+                    IsOn="False" />
+                <ToggleSwitch
+                    Header="Cifrado de la biblioteca"
+                    IsEnabled="False"
+                    IsOn="False" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="OCR y voz (próximamente)" />
+                <ToggleSwitch
+                    Header="OCR automático al importar"
+                    IsEnabled="False"
+                    IsOn="False" />
+                <ToggleSwitch
+                    Header="Dictado por voz local"
+                    IsEnabled="False"
+                    IsOn="False" />
+            </StackPanel>
+
+            <StackPanel Spacing="8">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Nube (próximamente)" />
+                <ComboBox Header="Proveedor" IsEnabled="False" SelectedIndex="0">
+                    <ComboBoxItem Content="Ninguno" />
+                    <ComboBoxItem Content="OneDrive" />
+                    <ComboBoxItem Content="Google Drive" />
+                    <ComboBoxItem Content="Dropbox" />
+                </ComboBox>
+            </StackPanel>
+
+            <TextBlock
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="CA-CO — tu biblioteca personal, offline-first." />
+        </StackPanel>
+    </ScrollViewer>
+</local:SettingsPageBase>

@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<local:DocumentDetailPageBase
+    x:Class="CaCo.App.Pages.DocumentDetailPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:CaCo.App.Pages"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:CaCo.App.ViewModels"
+    mc:Ignorable="d">
+
+    <ScrollViewer Padding="32,24,32,32">
+        <StackPanel
+            MaxWidth="900"
+            HorizontalAlignment="Left"
+            Spacing="16">
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
+            <InfoBar
+                IsOpen="{x:Bind ViewModel.HasInfo, Mode=OneWay}"
+                Message="{x:Bind ViewModel.InfoMessage, Mode=OneWay}"
+                Severity="Success" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Command="{x:Bind ViewModel.GoBackCommand, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontSize="14" Glyph="&#xE76B;" />
+                        <TextBlock Text="Volver" />
+                    </StackPanel>
+                </Button>
+                <Button Command="{x:Bind ViewModel.ToggleFavoriteCommand, Mode=OneWay}" ToolTipService.ToolTip="Favorito">
+                    <FontIcon FontSize="16" Glyph="&#xE734;" />
+                </Button>
+                <Button Command="{x:Bind ViewModel.RenameCommand, Mode=OneWay}" Content="Renombrar" />
+            </StackPanel>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="6">
+                    <TextBlock
+                        Style="{StaticResource TitleTextBlockStyle}"
+                        Text="{x:Bind ViewModel.DocumentTitle, Mode=OneWay}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.MetaText, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer
+                x:Name="ImagePreview"
+                x:Load="{x:Bind ViewModel.IsImagePreview, Mode=OneWay}"
+                MaxHeight="480"
+                HorizontalScrollMode="Auto"
+                VerticalScrollMode="Auto"
+                ZoomMode="Enabled">
+                <Image Source="{x:Bind ViewModel.PreviewImage, Mode=OneWay}" Stretch="Uniform" />
+            </ScrollViewer>
+
+            <ScrollViewer
+                x:Name="TextPreview"
+                x:Load="{x:Bind ViewModel.IsTextPreview, Mode=OneWay}"
+                MaxHeight="480"
+                VerticalScrollMode="Auto">
+                <TextBlock
+                    FontFamily="Consolas"
+                    Text="{x:Bind ViewModel.PreviewText, Mode=OneWay}"
+                    TextWrapping="Wrap" />
+            </ScrollViewer>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button
+                    Command="{x:Bind ViewModel.OpenReaderCommand, Mode=OneWay}"
+                    Content="Abrir espacio de trabajo"
+                    Style="{StaticResource AccentButtonStyle}" />
+                <Button Command="{x:Bind ViewModel.OpenCommand, Mode=OneWay}" Content="Abrir externo" />
+                <Button Command="{x:Bind ViewModel.ShowInFolderCommand, Mode=OneWay}" Content="Mostrar en carpeta" />
+            </StackPanel>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE8B7;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Cuaderno" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Text="{x:Bind ViewModel.NotebookName, Mode=OneWay}" />
+                        <Button Command="{x:Bind ViewModel.MoveToNotebookCommand, Mode=OneWay}" Content="Mover" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE8EC;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Etiquetas" />
+                    </StackPanel>
+                    <ListView
+                        ItemsSource="{x:Bind ViewModel.Tags, Mode=OneWay}"
+                        SelectionMode="None">
+                        <ListView.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <ItemsWrapGrid HorizontalAlignment="Left" Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListView.ItemsPanel>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TagItem">
+                            <Button Click="TagRemove_Click" ToolTipService.ToolTip="Quitar etiqueta">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{x:Bind Name, Mode=OneWay}" />
+                                    <FontIcon FontSize="12" Glyph="&#xE711;" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Button Command="{x:Bind ViewModel.AddTagCommand, Mode=OneWay}" Content="Añadir etiqueta" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE946;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Ficha" />
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.HashText, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Name="TrashButton"
+                    x:Load="{x:Bind ViewModel.IsNotInTrash, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.MoveToTrashCommand, Mode=OneWay}"
+                    Content="Mover a la papelera" />
+                <Button
+                    x:Name="RestoreButton"
+                    x:Load="{x:Bind ViewModel.IsInTrash, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.RestoreCommand, Mode=OneWay}"
+                    Content="Restaurar" />
+                <Button
+                    x:Name="DeleteButton"
+                    x:Load="{x:Bind ViewModel.IsInTrash, Mode=OneWay}"
+                    Command="{x:Bind ViewModel.DeletePermanentlyCommand, Mode=OneWay}"
+                    Content="Eliminar definitivamente" />
+            </StackPanel>
+
+            <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
+        </StackPanel>
+    </ScrollViewer>
+</local:DocumentDetailPageBase>

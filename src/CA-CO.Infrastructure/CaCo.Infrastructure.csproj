@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>CaCo.Infrastructure</RootNamespace>
+    <Description>Implementaciones concretas de CA-CO: almacenamiento local, persistencia JSON, logging y configuración.</Description>
+    <!-- NU1903: SQLitePCLRaw.lib.e_sqlite3 (transitivo de Microsoft.Data.Sqlite) sin parche.
+         Riesgo no explotable aquí (SQLite embebido local, sin red ni entradas remotas).
+         Revisar al actualizar Microsoft.Data.Sqlite. -->
+    <NoWarn>NU1903</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CA-CO.Core\CaCo.Core.csproj" />
+    <ProjectReference Include="..\CA-CO.Domain\CaCo.Domain.csproj" />
+    <ProjectReference Include="..\CA-CO.Application\CaCo.Application.csproj" />
+  </ItemGroup>
+
+</Project>
