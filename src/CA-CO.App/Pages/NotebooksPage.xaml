@@ -68,17 +68,49 @@
 
             <Border Style="{StaticResource CacoCardBorderStyle}" Padding="8">
                 <StackPanel Spacing="8">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon
-                            VerticalAlignment="Center"
-                            FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xE8A5;" />
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            Style="{StaticResource CacoSectionHeaderTextStyle}"
-                            Text="Sin clasificar" />
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="&#xE8A5;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource CacoSectionHeaderTextStyle}"
+                                Text="Sin clasificar" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="2">
+                            <Button
+                                AutomationProperties.Name="Añadir archivos"
+                                Command="{x:Bind ViewModel.AddUnclassifiedFilesCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Añadir archivos">
+                                <FontIcon FontSize="14" Glyph="&#xE710;" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="Seleccionar todo"
+                                Command="{x:Bind ViewModel.SelectAllUnclassifiedCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Seleccionar todo o nada">
+                                <FontIcon FontSize="14" Glyph="&#xE8B3;" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="Eliminar marcados"
+                                Command="{x:Bind ViewModel.DeleteCheckedUnclassifiedCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Mandar marcados a la papelera">
+                                <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}"
@@ -92,10 +124,17 @@
                         ItemsSource="{x:Bind ViewModel.UnclassifiedDocuments, Mode=OneWay}"
                         SelectionMode="Extended">
                         <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="domain:Document">
-                                <TextBlock
-                                    Text="{x:Bind Name, Mode=OneTime}"
-                                    TextTrimming="CharacterEllipsis" />
+                            <DataTemplate x:DataType="vm:DocumentRow">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <CheckBox
+                                        VerticalAlignment="Center"
+                                        IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                        MinWidth="0" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind Document.Name, Mode=OneWay}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
@@ -106,41 +145,84 @@
                 Grid.Column="1"
                 Style="{StaticResource CacoCardBorderStyle}"
                 Padding="8">
-                <ListView
-                    ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}"
-                    SelectedItem="{x:Bind ViewModel.SelectedRow, Mode=TwoWay}"
-                    SelectionChanged="List_SelectionChanged"
-                    SelectionMode="Single">
-                    <ListView.ItemContainerTransitions>
-                        <TransitionCollection>
-                            <EntranceThemeTransition />
-                        </TransitionCollection>
-                    </ListView.ItemContainerTransitions>
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:NotebookRow">
-                            <StackPanel
-                                AllowDrop="True"
-                                Drop="Notebook_Drop"
-                                DragOver="Any_DragOver"
-                                Orientation="Horizontal"
-                                Spacing="8">
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Text="{x:Bind IndentText, Mode=OneWay}" />
-                                <FontIcon
-                                    VerticalAlignment="Center"
-                                    FontSize="18"
-                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    Glyph="&#xE8B7;" />
-                                <TextBlock
-                                    VerticalAlignment="Center"
-                                    FontWeight="SemiBold"
-                                    Text="{x:Bind Notebook.Name, Mode=OneWay}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                <StackPanel Spacing="8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource CacoSectionHeaderTextStyle}"
+                            Text="Cuadernos" />
+                        <StackPanel
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="2">
+                            <Button
+                                AutomationProperties.Name="Añadir cuaderno"
+                                Command="{x:Bind ViewModel.CreateCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Añadir cuaderno">
+                                <FontIcon FontSize="14" Glyph="&#xE710;" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="Seleccionar todo"
+                                Command="{x:Bind ViewModel.SelectAllNotebooksCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Seleccionar todo o nada">
+                                <FontIcon FontSize="14" Glyph="&#xE8B3;" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="Eliminar marcados"
+                                Command="{x:Bind ViewModel.DeleteCheckedNotebooksCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Eliminar marcados (doble confirmación)">
+                                <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <ListView
+                        ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}"
+                        SelectedItem="{x:Bind ViewModel.SelectedRow, Mode=TwoWay}"
+                        SelectionChanged="List_SelectionChanged"
+                        SelectionMode="Single">
+                        <ListView.ItemContainerTransitions>
+                            <TransitionCollection>
+                                <EntranceThemeTransition />
+                            </TransitionCollection>
+                        </ListView.ItemContainerTransitions>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:NotebookRow">
+                                <StackPanel
+                                    AllowDrop="True"
+                                    Drop="Notebook_Drop"
+                                    DragOver="Any_DragOver"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <CheckBox
+                                        VerticalAlignment="Center"
+                                        IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                        MinWidth="0" />
+                                    <StackPanel
+                                        Margin="{x:Bind IndentMargin, Mode=OneWay}"
+                                        Orientation="Horizontal"
+                                        Spacing="8">
+                                        <FontIcon
+                                            VerticalAlignment="Center"
+                                            FontSize="18"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Glyph="&#xE8B7;" />
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            FontWeight="SemiBold"
+                                            Text="{x:Bind Notebook.Name, Mode=OneWay}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
             </Border>
 
             <Border
@@ -148,17 +230,56 @@
                 Style="{StaticResource CacoCardBorderStyle}"
                 VerticalAlignment="Stretch">
                 <StackPanel Spacing="8">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon
-                            VerticalAlignment="Center"
-                            FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xE8B7;" />
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            Style="{StaticResource CacoSectionHeaderTextStyle}"
-                            Text="{x:Bind ViewModel.SelectedNotebookName, Mode=OneWay}" />
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <FontIcon
+                                VerticalAlignment="Center"
+                                FontSize="16"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Glyph="&#xE8B7;" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Style="{StaticResource CacoSectionHeaderTextStyle}"
+                                Text="{x:Bind ViewModel.SelectedNotebookName, Mode=OneWay}" />
+                        </StackPanel>
+                        <StackPanel
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="2">
+                            <Button
+                                AutomationProperties.Name="Añadir marcados de Sin clasificar"
+                                Command="{x:Bind ViewModel.MoveCheckedToSelectedCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Añadir aquí los marcados de Sin clasificar">
+                                <FontIcon FontSize="14" Glyph="&#xEB47;" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="Importar archivos"
+                                Command="{x:Bind ViewModel.AddToSelectedFilesCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Importar archivos a este cuaderno">
+                                <FontIcon FontSize="14" Glyph="&#xE710;" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="Seleccionar todo"
+                                Command="{x:Bind ViewModel.SelectAllSelectedCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Seleccionar todo o nada">
+                                <FontIcon FontSize="14" Glyph="&#xE8B3;" />
+                            </Button>
+                            <Button
+                                AutomationProperties.Name="Eliminar marcados"
+                                Command="{x:Bind ViewModel.DeleteCheckedSelectedCommand, Mode=OneWay}"
+                                Style="{StaticResource SubtleButtonStyle}"
+                                ToolTipService.ToolTip="Mandar marcados a la papelera">
+                                <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
                     <ListView
                         AllowDrop="True"
                         Drop="SelectedDocs_Drop"
@@ -176,8 +297,18 @@
                             </Style>
                         </ListView.ItemContainerStyle>
                         <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="domain:Document">
-                                <views:RecentDocumentView />
+                            <DataTemplate x:DataType="vm:DocumentRow">
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox
+                                        VerticalAlignment="Center"
+                                        IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                        MinWidth="0" />
+                                    <views:RecentDocumentView Grid.Column="1" />
+                                </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>

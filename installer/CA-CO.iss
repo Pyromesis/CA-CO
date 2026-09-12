@@ -4,7 +4,7 @@
 ; Compilar: ISCC.exe /S"casign=..." installer\CA-CO.iss
 ;   (o .\installer\Build-Installer.ps1 que lo hace todo)
 ; =============================================================
-#define AppVersion "1.2.0"
+#define AppVersion "1.2.1"
 #define Staging "staging\CA-CO"
 
 [Setup]

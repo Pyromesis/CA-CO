@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CaCo.App.Services;
 using CaCo.Application.Errors;
 using CaCo.Application.Import;
@@ -154,7 +154,12 @@ public sealed partial class HomeViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshNowAsync();
+            await RefreshNowAsync(ct);
+            if (HasError)
+            {
+                return;
+            }
+
             var parts = new List<string>();
             if (batch.Imported > 0)
             {
@@ -184,10 +189,10 @@ public sealed partial class HomeViewModel : ViewModelBase
     }
 
     /// <summary>Refresca aunque la importación mantenga <see cref="ViewModelBase.IsBusy"/>.</summary>
-    private async Task RefreshNowAsync()
+    private async Task RefreshNowAsync(CancellationToken ct)
     {
         IsBusy = false;
-        await RefreshAsync(CancellationToken.None);
+        await RefreshAsync(ct);
     }
 
     /// <summary>Crea un cuaderno (pide el nombre).</summary>
@@ -221,8 +226,11 @@ public sealed partial class HomeViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshNowAsync();
-            ShowInfo($"Cuaderno «{created.Value.Name}» creado.");
+            await RefreshNowAsync(ct);
+            if (!HasError)
+            {
+                ShowInfo($"Cuaderno «{created.Value.Name}» creado.");
+            }
         }
         catch (Exception ex)
         {

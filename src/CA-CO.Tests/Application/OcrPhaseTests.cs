@@ -25,28 +25,37 @@ public sealed class OcrPhaseTests
     }
 
     [Fact]
-    public void Combine_SkipsBlanksAndJoins()
+    public void Combine_SinglePage_HasNoMarkers()
     {
-        var (text, truncated) = OcrPages.Combine(["  ", null, "uno", "", "dos"]);
+        var (text, truncated) = OcrPages.Combine([new PageText(3, "uno")]);
         Assert.False(truncated);
-        Assert.Equal("uno\n\ndos", text);
+        Assert.Equal("uno", text);
+    }
+
+    [Fact]
+    public void Combine_MultiPage_AddsPageMarkers()
+    {
+        var (text, truncated) = OcrPages.Combine(
+            [new PageText(1, "  "), new PageText(2, null), new PageText(3, "uno"), new PageText(5, "dos")]);
+        Assert.False(truncated);
+        Assert.Equal("— Página 3 —\n\nuno\n\n— Página 5 —\n\ndos", text);
     }
 
     [Fact]
     public void Combine_TruncatesAtMaxChars()
     {
         var (text, truncated) = OcrPages.Combine(
-            ["abcdefghij", "klmnopqrst"],
-            new PdfOcrOptions { MaxChars = 12 });
+            [new PageText(1, "abcdefghij"), new PageText(2, "klmnopqrst")],
+            new PdfOcrOptions { MaxChars = 40 });
         Assert.True(truncated);
-        Assert.True(text.Length <= 12);
-        Assert.StartsWith("abcdefghij", text);
+        Assert.True(text.Length <= 40);
+        Assert.StartsWith("— Página 1 —", text);
     }
 
     [Fact]
     public void Combine_Empty_ReturnsEmpty()
     {
-        var (text, truncated) = OcrPages.Combine([null, "  "]);
+        var (text, truncated) = OcrPages.Combine([new PageText(1, null), new PageText(2, "  ")]);
         Assert.False(truncated);
         Assert.Equal(string.Empty, text);
     }

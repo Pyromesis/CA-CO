@@ -27,6 +27,11 @@ public sealed record OcrProgress(int PagesDone, int TotalPages);
 /// <param name="Truncated">Si se cortó por <see cref="PdfOcrOptions"/>.</param>
 public sealed record PdfOcrResult(string Text, int PagesProcessed, int TotalPages, bool Truncated);
 
+/// <summary>Texto de una página para unir.</summary>
+/// <param name="Number">Número de página original (1-based).</param>
+/// <param name="Text">Texto (null/vacío = página sin texto).</param>
+public sealed record PageText(int Number, string? Text);
+
 /// <summary>Claves de metadatos del resultado OCR (para Fase 6: búsqueda).</summary>
 public static class OcrMetadataKeys
 {
@@ -57,21 +62,21 @@ public static class OcrPages
     }
 
     /// <summary>Une textos de páginas con separador y tope de caracteres.</summary>
-    /// <param name="pageTexts">Texto por página (null/vacío = página sin texto).</param>
+    /// <param name="pages">Páginas (null/vacío = sin texto). Varias páginas con
+    /// texto llevan cabecera "— Página N —" para que el resultado se lea ordenado.</param>
     /// <remarks>Separador determinista <c>"\n\n"</c>; el resultado nunca supera el tope.</remarks>
-    public static (string Text, bool Truncated) Combine(IEnumerable<string?> pageTexts, PdfOcrOptions? options = null)
+    public static (string Text, bool Truncated) Combine(IEnumerable<PageText> pages, PdfOcrOptions? options = null)
     {
+        ArgumentNullException.ThrowIfNull(pages);
         var max = Math.Max(1, (options ?? PdfOcrOptions.Default).MaxChars);
+        var withText = pages.Where(p => !string.IsNullOrWhiteSpace(p.Text)).ToList();
+        var multi = withText.Count > 1;
         var sb = new StringBuilder();
         var truncated = false;
-        foreach (var page in pageTexts)
+        foreach (var page in withText)
         {
-            if (string.IsNullOrWhiteSpace(page))
-            {
-                continue;
-            }
-
-            var chunk = (sb.Length > 0 ? "\n\n" : string.Empty) + page.Trim();
+            var block = (multi ? $"— Página {page.Number} —\n\n" : string.Empty) + page.Text!.Trim();
+            var chunk = (sb.Length > 0 ? "\n\n" : string.Empty) + block;
             var room = max - sb.Length;
             if (room <= 0)
             {

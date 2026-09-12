@@ -35,7 +35,7 @@ public sealed partial class NotebooksPage : NotebooksPageBase
             return;
         }
 
-        var ids = list.SelectedItems.OfType<Document>().Select(d => d.Id.ToString("D")).ToList();
+        var ids = list.SelectedItems.OfType<ViewModels.DocumentRow>().Select(d => d.Document.Id.ToString("D")).ToList();
         if (ids.Count == 0)
         {
             args.Cancel = true;
@@ -133,7 +133,9 @@ public sealed partial class NotebooksPage : NotebooksPageBase
 
     private void Docs_ItemClick(object sender, ItemClickEventArgs e)
     {
-        if (e.ClickedItem is CaCo.Domain.Document document)
+        var document = e.ClickedItem as CaCo.Domain.Document
+            ?? (e.ClickedItem as ViewModels.DocumentRow)?.Document;
+        if (document is not null)
         {
             ViewModel.OpenDocumentCommand.Execute(document);
         }

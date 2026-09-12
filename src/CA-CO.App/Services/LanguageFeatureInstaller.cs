@@ -173,6 +173,30 @@ public sealed class LanguageFeatureInstaller(ILogger<LanguageFeatureInstaller> l
             return Result.Failure<string>(Error.Storage("Language.LaunchFailed", "No se pudo iniciar la instalación."));
         }
 
+        try
+        {
+            return await WaitAndReadResultAsync(process, resultPath, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            // La carpeta temporal (script + resultado) no debe acumularse.
+            try
+            {
+                if (Directory.Exists(folder))
+                {
+                    Directory.Delete(folder, recursive: true);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug(ex, "No se pudo limpiar la carpeta temporal del instalador de idioma.");
+            }
+        }
+    }
+
+    private async Task<Result<string>> WaitAndReadResultAsync(
+        Process process, string resultPath, CancellationToken ct)
+    {
         var startTime = DateTime.UtcNow;
         var maxDuration = TimeSpan.FromMinutes(45);
         try
@@ -193,7 +217,9 @@ public sealed class LanguageFeatureInstaller(ILogger<LanguageFeatureInstaller> l
         }
         catch (OperationCanceledException)
         {
-            return Result.Success("La instalación sigue en segundo plano. Vuelve en unos minutos.");
+            return Result.Failure<string>(Error.Validation(
+                "Language.Cancelled",
+                "Instalación cancelada. El instalador elevado puede seguir en segundo plano; revisa su ventana."));
         }
 
         try
@@ -220,7 +246,7 @@ public sealed class LanguageFeatureInstaller(ILogger<LanguageFeatureInstaller> l
                 logger.LogWarning("Idioma parcial: {Fails}", string.Join("; ", fails));
                 return Result.Failure<string>(Error.Storage(
                     "Language.Partial",
-                    $"Se instalaron {oks}, fallaron {fails.Count} (¿hay Internet?). Detalle en {resultPath}"));
+                    $"Se instalaron {oks}, fallaron {fails.Count} (¿hay Internet?). Vuelve a intentarlo."));
             }
 
             return Result.Success($"Voz y OCR instalados ({oks} componentes).");

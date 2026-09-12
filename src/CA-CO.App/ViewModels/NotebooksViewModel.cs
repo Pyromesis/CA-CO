@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CaCo.App.Services;
 using CaCo.Application.Errors;
 using CaCo.Application.Import;
@@ -27,15 +27,36 @@ public sealed partial class NotebookRow : ObservableObject
 
     /// <summary>Profundidad (0 = raíz).</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IndentText))]
+    [NotifyPropertyChangedFor(nameof(IndentMargin))]
     private int _level;
 
     /// <summary>Documentos directos (punto de extensión: conteo eficiente en Fase 1).</summary>
     [ObservableProperty]
     private int _documentCount;
 
-    /// <summary>Sangría visual (espacios) según profundidad. Solo presentación.</summary>
-    public string IndentText => new string(' ', Level * 4);
+    /// <summary>Sangría visual según profundidad (los espacios los colapsa XAML).</summary>
+    public Microsoft.UI.Xaml.Thickness IndentMargin => new(Level * 20, 0, 0, 0);
+
+    /// <summary>Casilla de selección (lotes por columna).</summary>
+    [ObservableProperty]
+    private bool _isSelected;
+}
+
+/// <summary>Fila de documento seleccionable (listas de Cuadernos).</summary>
+public sealed partial class DocumentRow : ObservableObject
+{
+    /// <summary>Crea la fila.</summary>
+    public DocumentRow(Document document)
+    {
+        Document = document;
+    }
+
+    /// <summary>Documento.</summary>
+    public Document Document { get; }
+
+    /// <summary>Casilla de selección.</summary>
+    [ObservableProperty]
+    private bool _isSelected;
 }
 
 /// <summary>ViewModel de cuadernos: árbol jerárquico + documentos del seleccionado.</summary>
@@ -47,6 +68,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
     private readonly INavigationService _navigation;
     private readonly IBatchImportService _batch;
     private readonly IFolderScanner _scanner;
+    private readonly IFilePickerService _picker;
 
     /// <summary>Crea el ViewModel.</summary>
     public NotebooksViewModel(
@@ -56,7 +78,8 @@ public sealed partial class NotebooksViewModel : ViewModelBase
         IDialogService dialogs,
         INavigationService navigation,
         IBatchImportService batch,
-        IFolderScanner scanner)
+        IFolderScanner scanner,
+        IFilePickerService picker)
         : base(errors)
     {
         _notebooks = notebooks;
@@ -65,16 +88,17 @@ public sealed partial class NotebooksViewModel : ViewModelBase
         _navigation = navigation;
         _batch = batch;
         _scanner = scanner;
+        _picker = picker;
     }
 
     /// <summary>Filas del árbol (aplanado con nivel).</summary>
     public ObservableCollection<NotebookRow> Rows { get; } = [];
 
     /// <summary>Documentos del cuaderno seleccionado.</summary>
-    public ObservableCollection<Document> SelectedDocuments { get; } = [];
+    public ObservableCollection<DocumentRow> SelectedDocuments { get; } = [];
 
     /// <summary>Documentos sin cuaderno (origen para arrastrar).</summary>
-    public ObservableCollection<Document> UnclassifiedDocuments { get; } = [];
+    public ObservableCollection<DocumentRow> UnclassifiedDocuments { get; } = [];
 
     /// <summary>Fila seleccionada.</summary>
     [ObservableProperty]
@@ -123,8 +147,8 @@ public sealed partial class NotebooksViewModel : ViewModelBase
 
             NotebookCount = all.Value.Count;
             SelectedRow = Rows.FirstOrDefault(r => r.Notebook.Id == selectedId) ?? Rows.FirstOrDefault();
-            await LoadSelectedDocumentsAsync(CancellationToken.None);
-            await LoadUnclassifiedAsync(CancellationToken.None);
+            await LoadSelectedDocumentsAsync(ct);
+            await LoadUnclassifiedAsync(ct);
         }
         catch (Exception ex)
         {
@@ -168,6 +192,11 @@ public sealed partial class NotebooksViewModel : ViewModelBase
     [RelayCommand]
     private async Task CreateAsync(CancellationToken ct)
     {
+        if (IsBusy)
+        {
+            return;
+        }
+
         try
         {
             var hint = SelectedRow is null ? "raíz" : $"dentro de «{SelectedRow.Notebook.Name}»";
@@ -184,9 +213,9 @@ public sealed partial class NotebooksViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
             SelectedRow = Rows.FirstOrDefault(r => r.Notebook.Id == created.Value.Id);
-            await LoadSelectedDocumentsAsync(CancellationToken.None);
+            await LoadSelectedDocumentsAsync(ct);
         }
         catch (Exception ex)
         {
@@ -198,6 +227,11 @@ public sealed partial class NotebooksViewModel : ViewModelBase
     [RelayCommand]
     private async Task RenameAsync(CancellationToken ct)
     {
+        if (IsBusy)
+        {
+            return;
+        }
+
         if (SelectedRow is null)
         {
             return;
@@ -218,7 +252,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
         }
         catch (Exception ex)
         {
@@ -230,6 +264,11 @@ public sealed partial class NotebooksViewModel : ViewModelBase
     [RelayCommand]
     private async Task DeleteAsync(CancellationToken ct)
     {
+        if (IsBusy)
+        {
+            return;
+        }
+
         if (SelectedRow is null)
         {
             return;
@@ -263,7 +302,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
             }
 
             SelectedRow = null;
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
         }
         catch (Exception ex)
         {
@@ -294,7 +333,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
 
         foreach (var doc in docs.Value.Items)
         {
-            SelectedDocuments.Add(doc);
+            SelectedDocuments.Add(new DocumentRow(doc));
         }
     }
 
@@ -313,7 +352,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
 
             foreach (var doc in docs.Value.Items)
             {
-                UnclassifiedDocuments.Add(doc);
+                UnclassifiedDocuments.Add(new DocumentRow(doc));
             }
         }
         catch (Exception ex)
@@ -322,10 +361,10 @@ public sealed partial class NotebooksViewModel : ViewModelBase
         }
     }
 
-    private async Task ReloadDocumentListsAsync()
+    private async Task ReloadDocumentListsAsync(CancellationToken ct)
     {
-        await LoadSelectedDocumentsAsync(CancellationToken.None);
-        await LoadUnclassifiedAsync(CancellationToken.None);
+        await LoadSelectedDocumentsAsync(ct);
+        await LoadUnclassifiedAsync(ct);
     }
 
     /// <summary>
@@ -359,7 +398,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
                 moved++;
             }
 
-            await ReloadDocumentListsAsync();
+            await ReloadDocumentListsAsync(ct);
             if (failed > 0)
             {
                 ShowError(Core.Error.Storage("Notebooks.MoveFailed", $"{failed} documento(s) no se pudieron mover."));
@@ -440,7 +479,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
                 return;
             }
 
-            await ReloadDocumentListsAsync();
+            await ReloadDocumentListsAsync(ct);
             var parts = new List<string>();
             if (batch.Imported > 0)
             {
@@ -462,6 +501,280 @@ public sealed partial class NotebooksViewModel : ViewModelBase
         catch (OperationCanceledException)
         {
             ShowInfo("Importación cancelada.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>Marca o desmarca todas las filas del árbol.</summary>
+    [RelayCommand]
+    private void SelectAllNotebooks()
+    {
+        var target = !Rows.All(r => r.IsSelected);
+        foreach (var row in Rows)
+        {
+            row.IsSelected = target;
+        }
+    }
+
+    /// <summary>Marca o desmarca los sin clasificar.</summary>
+    [RelayCommand]
+    private void SelectAllUnclassified()
+    {
+        var target = !UnclassifiedDocuments.All(d => d.IsSelected);
+        foreach (var doc in UnclassifiedDocuments)
+        {
+            doc.IsSelected = target;
+        }
+    }
+
+    /// <summary>Marca o desmarca los documentos del cuaderno.</summary>
+    [RelayCommand]
+    private void SelectAllSelected()
+    {
+        var target = !SelectedDocuments.All(d => d.IsSelected);
+        foreach (var doc in SelectedDocuments)
+        {
+            doc.IsSelected = target;
+        }
+    }
+
+    /// <summary>Importa archivos a Sin clasificar.</summary>
+    [RelayCommand]
+    private async Task AddUnclassifiedFilesAsync(CancellationToken ct)
+    {
+        IReadOnlyList<string> picked;
+        try
+        {
+            picked = await _picker.PickDocumentsAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+            return;
+        }
+
+        if (picked.Count == 0)
+        {
+            return;
+        }
+
+        await ImportPickedAsync(picked, null, ct);
+    }
+
+    /// <summary>Importa archivos al cuaderno seleccionado.</summary>
+    [RelayCommand]
+    private async Task AddToSelectedFilesAsync(CancellationToken ct)
+    {
+        if (SelectedRow is null)
+        {
+            ShowInfo("Elige primero un cuaderno.");
+            return;
+        }
+
+        IReadOnlyList<string> picked;
+        try
+        {
+            picked = await _picker.PickDocumentsAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+            return;
+        }
+
+        if (picked.Count == 0)
+        {
+            return;
+        }
+
+        await ImportPickedAsync(picked, SelectedRow.Notebook.Id, ct);
+    }
+
+    /// <summary>Mueve los sin clasificar marcados al cuaderno seleccionado.</summary>
+    [RelayCommand]
+    private async Task MoveCheckedToSelectedAsync(CancellationToken ct)
+    {
+        if (SelectedRow is null)
+        {
+            ShowInfo("Elige primero un cuaderno.");
+            return;
+        }
+
+        var ids = UnclassifiedDocuments.Where(d => d.IsSelected).Select(d => d.Document.Id).ToList();
+        if (ids.Count == 0)
+        {
+            ShowInfo("Marca primero archivos en Sin clasificar.");
+            return;
+        }
+
+        await MoveDocumentsToNotebookAsync(ids, SelectedRow.Notebook.Id, ct);
+    }
+
+    /// <summary>Manda a la papelera los sin clasificar marcados (una confirmación).</summary>
+    [RelayCommand]
+    private async Task DeleteCheckedUnclassifiedAsync(CancellationToken ct)
+    {
+        var checkedDocs = UnclassifiedDocuments.Where(d => d.IsSelected).ToList();
+        if (checkedDocs.Count == 0)
+        {
+            ShowInfo("Marca primero archivos en Sin clasificar.");
+            return;
+        }
+
+        await DeleteDocumentsAsync(checkedDocs, ct);
+    }
+
+    /// <summary>Manda a la papelera los documentos marcados del cuaderno (una confirmación).</summary>
+    [RelayCommand]
+    private async Task DeleteCheckedSelectedAsync(CancellationToken ct)
+    {
+        var checkedDocs = SelectedDocuments.Where(d => d.IsSelected).ToList();
+        if (checkedDocs.Count == 0)
+        {
+            ShowInfo("Marca primero archivos del cuaderno.");
+            return;
+        }
+
+        await DeleteDocumentsAsync(checkedDocs, ct);
+    }
+
+    private async Task DeleteDocumentsAsync(IReadOnlyList<DocumentRow> checkedDocs, CancellationToken ct)
+    {
+        ClearMessages();
+        IsBusy = true;
+        try
+        {
+            var confirmed = await _dialogs.ConfirmAsync(
+                "Mover a la papelera",
+                checkedDocs.Count == 1
+                    ? $"¿Estás seguro de que quieres eliminar «{checkedDocs[0].Document.Name}»? Quedará en la papelera."
+                    : $"¿Estás seguro de que quieres eliminar {checkedDocs.Count} archivos? Quedarán en la papelera.",
+                "Mover a la papelera");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            var failed = 0;
+            foreach (var row in checkedDocs)
+            {
+                ct.ThrowIfCancellationRequested();
+                if ((await _documents.MoveToTrashAsync(row.Document.Id, ct)).IsFailure)
+                {
+                    failed++;
+                }
+            }
+
+            await ReloadDocumentListsAsync(ct);
+            ShowInfo(failed == 0
+                ? $"{checkedDocs.Count} archivo(s) en la papelera."
+                : $"{checkedDocs.Count - failed} en la papelera, {failed} con error.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>Elimina los cuadernos marcados, de dentro hacia fuera (doble confirmación).</summary>
+    [RelayCommand]
+    private async Task DeleteCheckedNotebooksAsync(CancellationToken ct)
+    {
+        var checkedRows = Rows.Where(r => r.IsSelected).ToList();
+        if (checkedRows.Count == 0)
+        {
+            ShowInfo("Marca primero cuadernos en el árbol.");
+            return;
+        }
+
+        try
+        {
+            var confirmed = await _dialogs.ConfirmAsync(
+                "Eliminar cuadernos",
+                checkedRows.Count == 1
+                    ? $"¿Estás seguro de que quieres eliminar «{checkedRows[0].Notebook.Name}»?"
+                    : $"¿Estás seguro de que quieres eliminar {checkedRows.Count} cuadernos?",
+                "Eliminar");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            confirmed = await _dialogs.ConfirmAsync(
+                "Eliminar cuadernos",
+                checkedRows.Count == 1
+                    ? $"«{checkedRows[0].Notebook.Name}» se eliminará de forma permanente. Su contenido se conservará."
+                    : $"{checkedRows.Count} cuadernos se eliminarán de forma permanente. Su contenido se conservará.",
+                "Eliminar definitivamente");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            IsBusy = true;
+            var failed = 0;
+            // De dentro hacia fuera: los hijos antes que sus padres.
+            foreach (var row in checkedRows.OrderByDescending(r => r.Level))
+            {
+                ct.ThrowIfCancellationRequested();
+                if ((await _notebooks.DeleteAsync(row.Notebook.Id, ct)).IsFailure)
+                {
+                    failed++;
+                }
+            }
+
+            SelectedRow = null;
+            await RefreshAsync(ct);
+            if (failed > 0)
+            {
+                ShowError(Core.Error.Storage("Notebooks.DeleteFailed", $"{failed} cuaderno(s) no se pudieron eliminar."));
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task ImportPickedAsync(IReadOnlyList<string> picked, Guid? notebookId, CancellationToken ct)
+    {
+        ClearMessages();
+        IsBusy = true;
+        try
+        {
+            var result = await _batch.ImportBatchAsync(picked, notebookId, null, null, ct);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+                return;
+            }
+
+            var batch = result.Value;
+            if (batch.RejectedByLimit)
+            {
+                ShowError(Core.Error.Validation("Import.BatchTooLarge", batch.LimitReason ?? "Lote demasiado grande."));
+                return;
+            }
+
+            await ReloadDocumentListsAsync(ct);
+            ShowInfo(batch.Imported > 0
+                ? $"{batch.Imported} importado(s)."
+                : "Nada que importar.");
         }
         catch (Exception ex)
         {

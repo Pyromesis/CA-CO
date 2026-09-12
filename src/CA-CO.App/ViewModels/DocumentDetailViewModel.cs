@@ -125,7 +125,7 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
 
     /// <summary>Hash corto para identificar duplicados.</summary>
     [ObservableProperty]
-    private string _hashText = "—";
+    private string _hashText = "…”";
 
     /// <summary>Indica si está en papelera (muestra restaurar/eliminar).</summary>
     [ObservableProperty]
@@ -178,7 +178,7 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
                 $"{Views.DocumentFormat.Size(_document.SizeBytes)}  •  " +
                 $"Importado el {_document.ImportedAt.LocalDateTime:dd/MM/yyyy}";
             HashText = _document.ContentHash is null
-                ? "—"
+                ? "—”"
                 : _document.ContentHash[..Math.Min(12, _document.ContentHash.Length)];
 
             if (_document.NotebookId.HasValue)
@@ -256,7 +256,7 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
             return;
         }
 
-        await LoadAsync(CancellationToken.None);
+        await LoadAsync(ct);
     }
 
     /// <summary>Renombra.</summary>
@@ -268,20 +268,31 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
             return;
         }
 
-        var name = await _dialogs.PromptTextAsync("Renombrar", "Nuevo nombre", _document.Name);
-        if (name is null)
+        try
         {
-            return;
-        }
+            var name = await _dialogs.PromptTextAsync("Renombrar", "Nuevo nombre", _document.Name);
+            if (name is null)
+            {
+                return;
+            }
 
-        var result = await _documents.RenameAsync(_document.Id, name, ct);
-        if (result.IsFailure)
+            var result = await _documents.RenameAsync(_document.Id, name, ct);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+                return;
+            }
+
+            await LoadAsync(ct);
+        }
+        catch (OperationCanceledException)
         {
-            ShowError(result.Error);
-            return;
+            throw;
         }
-
-        await LoadAsync(CancellationToken.None);
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
     }
 
     /// <summary>Mueve a otro cuaderno (o lo deja sin clasificar).</summary>
@@ -300,97 +311,129 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
             return;
         }
 
-        var options = new List<NotebookChoice> { new(null, "(Sin clasificar)") };
-        options.AddRange(all.Value.Select(n => new NotebookChoice(n, IndentedName(n, all.Value))));
-
-        var choice = await _dialogs.PromptChoiceAsync("Mover a cuaderno", options, c => c.Label);
-        if (choice is null)
+        try
         {
-            return;
-        }
+            var options = new List<NotebookChoice> { new(null, "(Sin clasificar)") };
+            options.AddRange(all.Value.Select(n => new NotebookChoice(n, IndentedName(n, all.Value))));
 
-        var result = await _documents.MoveToNotebookAsync(_document.Id, choice.Notebook?.Id, ct);
-        if (result.IsFailure)
+            var choice = await _dialogs.PromptChoiceAsync("Mover a cuaderno", options, c => c.Label);
+            if (choice is null)
+            {
+                return;
+            }
+
+            var result = await _documents.MoveToNotebookAsync(_document.Id, choice.Notebook?.Id, ct);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+                return;
+            }
+
+            await LoadAsync(ct);
+        }
+        catch (OperationCanceledException)
         {
-            ShowError(result.Error);
-            return;
+            throw;
         }
-
-        await LoadAsync(CancellationToken.None);
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
     }
 
     /// <summary>Añade una etiqueta (la crea si no existe).</summary>
     [RelayCommand]
     private async Task AddTagAsync(CancellationToken ct)
     {
-        if (_document is null)
+        try
         {
-            return;
-        }
+            if (_document is null)
+            {
+                return;
+            }
 
-        var name = await _dialogs.PromptTextAsync("Añadir etiqueta", "Nombre de la etiqueta");
-        if (name is null)
+            var name = await _dialogs.PromptTextAsync("Añadir etiqueta", "Nombre de la etiqueta");
+            if (name is null)
+            {
+                return;
+            }
+
+            var result = await _documents.AddTagAsync(_document.Id, name, ct);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+                return;
+            }
+
+            await LoadAsync(ct);
+    
+        }
+        catch (Exception ex)
         {
-            return;
+            ShowError(ex);
         }
-
-        var result = await _documents.AddTagAsync(_document.Id, name, ct);
-        if (result.IsFailure)
-        {
-            ShowError(result.Error);
-            return;
-        }
-
-        await LoadAsync(CancellationToken.None);
     }
-
     /// <summary>Quita una etiqueta.</summary>
     [RelayCommand]
     private async Task RemoveTagAsync(TagItem? tag, CancellationToken ct)
     {
-        if (_document is null || tag is null)
+        try
         {
-            return;
-        }
+            if (_document is null || tag is null)
+            {
+                return;
+            }
 
-        var result = await _documents.RemoveTagAsync(_document.Id, tag.Id, ct);
-        if (result.IsFailure)
+            var result = await _documents.RemoveTagAsync(_document.Id, tag.Id, ct);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+                return;
+            }
+
+            await LoadAsync(ct);
+    
+        }
+        catch (Exception ex)
         {
-            ShowError(result.Error);
-            return;
+            ShowError(ex);
         }
-
-        await LoadAsync(CancellationToken.None);
     }
-
     /// <summary>Mueve a la papelera y vuelve a Documentos (una confirmación).</summary>
     [RelayCommand]
     private async Task MoveToTrashAsync(CancellationToken ct)
     {
-        if (_document is null)
+        try
         {
-            return;
-        }
+            if (_document is null)
+            {
+                return;
+            }
 
-        var confirmed = await _dialogs.ConfirmAsync(
-            "Mover a la papelera",
-            $"¿Estás seguro de que quieres eliminar «{_document.Name}»? Quedará en la papelera.",
-            "Mover a la papelera");
-        if (!confirmed)
+            var confirmed = await _dialogs.ConfirmAsync(
+                "Mover a la papelera",
+                $"¿Estás seguro de que quieres eliminar «{_document.Name}»? Quedará en la papelera.",
+                "Mover a la papelera");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            var result = await _documents.MoveToTrashAsync(_document.Id, ct);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+                return;
+            }
+
+            _navigation.NavigateTo<DocumentsViewModel>();
+    
+        }
+        catch (Exception ex)
         {
-            return;
+            ShowError(ex);
         }
-
-        var result = await _documents.MoveToTrashAsync(_document.Id, ct);
-        if (result.IsFailure)
-        {
-            ShowError(result.Error);
-            return;
-        }
-
-        _navigation.NavigateTo<DocumentsViewModel>();
     }
-
     /// <summary>Restaura desde la papelera.</summary>
     [RelayCommand]
     private async Task RestoreAsync(CancellationToken ct)
@@ -407,7 +450,7 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
             return;
         }
 
-        await LoadAsync(CancellationToken.None);
+        await LoadAsync(ct);
     }
 
     /// <summary>Elimina definitivamente (con confirmación) y vuelve.</summary>
@@ -489,6 +532,7 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
         var all = await _documents.ListAllTagsAsync(ct);
         if (all.IsFailure)
         {
+            ShowError(all.Error);
             return;
         }
 
@@ -527,10 +571,17 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
             else if (_document.FileType == DocumentType.Txt)
             {
                 await using var stream = await _storage.OpenReadAsync(
-                    _paths.Documents, _document.StoredFileName, ct).ConfigureAwait(false);
+                    _paths.Documents, _document.StoredFileName, ct);
                 using var reader = new StreamReader(stream);
                 var buffer = new char[MaxPreviewChars + 1];
-                var read = await reader.ReadAsync(buffer, ct).ConfigureAwait(false);
+                var read = 0;
+                int chunk;
+                while (read < buffer.Length
+                    && (chunk = await reader.ReadAsync(buffer.AsMemory(read), ct)) > 0)
+                {
+                    read += chunk;
+                }
+
                 PreviewText = new string(buffer, 0, Math.Min(read, MaxPreviewChars));
                 if (read > MaxPreviewChars)
                 {

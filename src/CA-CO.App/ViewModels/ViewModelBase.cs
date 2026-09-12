@@ -8,6 +8,10 @@ namespace CaCo.App.ViewModels;
 /// Base de todos los ViewModels: estado ocupado + mensajes para <c>InfoBar</c>.
 /// Los errores técnicos se traducen con <see cref="IErrorHandler"/>; la vista
 /// nunca ve excepciones ni stack traces.
+/// REGLA DE HILOS: los ViewModels viven en el hilo UI. Prohibido
+/// <c>ConfigureAwait(false)</c> en ViewModels y code-behind de páginas:
+/// continuar en otro hilo y tocar propiedades bindeadas revienta con
+/// RPC_E_WRONG_THREAD. Solo la capa Application/Infrastructure lo usa.
 /// </summary>
 public abstract partial class ViewModelBase : ObservableObject
 {
@@ -54,7 +58,16 @@ public abstract partial class ViewModelBase : ObservableObject
     protected void ShowError(Error error) => ShowUserError(_errors.FromError(error));
 
     /// <summary>Muestra una excepción inesperada (ya quedó en el log).</summary>
-    protected void ShowError(Exception exception) => ShowUserError(_errors.FromException(exception));
+    /// <remarks>La cancelación es rutinaria (navegar, cancelar): nunca es un error visible.</remarks>
+    protected void ShowError(Exception exception)
+    {
+        if (exception is OperationCanceledException)
+        {
+            return;
+        }
+
+        ShowUserError(_errors.FromException(exception));
+    }
 
     /// <summary>Muestra un mensaje informativo.</summary>
     protected void ShowInfo(string message)

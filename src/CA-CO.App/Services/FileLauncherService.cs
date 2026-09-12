@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Windows.Storage;
 using Windows.System;
 
@@ -17,7 +18,7 @@ public interface IFileLauncherService
 }
 
 /// <summary>Implementación con <c>Windows.System.Launcher</c> (respeta al usuario, sin rutas cableadas).</summary>
-public sealed class FileLauncherService : IFileLauncherService
+public sealed class FileLauncherService(ILogger<FileLauncherService> logger) : IFileLauncherService
 {
     /// <inheritdoc/>
     public async Task<bool> OpenFileAsync(string path, CancellationToken ct)
@@ -27,8 +28,9 @@ public sealed class FileLauncherService : IFileLauncherService
             var file = await StorageFile.GetFileFromPathAsync(path).AsTask(ct);
             return await Launcher.LaunchFileAsync(file);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogWarning(ex, "No se pudo abrir el archivo.");
             return false;
         }
     }
@@ -55,8 +57,9 @@ public sealed class FileLauncherService : IFileLauncherService
 
             return false;
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogWarning(ex, "No se pudo mostrar en el Explorador.");
             return false;
         }
     }
@@ -75,8 +78,9 @@ public sealed class FileLauncherService : IFileLauncherService
         {
             return await Launcher.LaunchUriAsync(uri);
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogWarning(ex, "No se pudo abrir la URI del sistema.");
             return false;
         }
     }

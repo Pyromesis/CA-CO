@@ -201,6 +201,35 @@ es reubicable.
   (`CA-CO-DOCS:` por texto) y del Explorador (archivos + carpetas vía
   `IFolderScanner` + lote con cuaderno destino); soltar en Sin clasificar
   desclasifica. `MoveDocumentsToNotebookAsync` no aborta al primer fallo.
+- Selección por casillas (`DocumentRow`, `NotebookRow.IsSelected`) con acciones
+  por columna: añadir, seleccionar todo/nada y borrados por lote (cuadernos de
+  dentro hacia fuera, documentos a la papelera con una confirmación).
 - Confirmaciones: papelera una ("Quedará en la papelera"), permanente doble
   ("de forma permanente"): cuadernos, borrado definitivo, vaciar papelera
   y notas (sin papelera).
+
+## 16. Hilos UI, indentación y OCR legible
+
+- `RPC_E_WRONG_THREAD` al guardar OCR: varios `await …ConfigureAwait(false)`
+  en ViewModels continuaban en pool y tocaban propiedades bindeadas.
+  Regla en `ViewModelBase`: prohibido `ConfigureAwait(false)` en
+  ViewModels y code-behind (8 retirados en Reader/Detalle).
+- Sangría del árbol por `Margin` (`IndentMargin`), no por espacios
+  (XAML los colapsa y la jerarquía se veía rota).
+- OCR multipágina con cabeceras "— Página N —" (`PageText`); el instalador
+  lleva `restartreplace` para archivos bloqueados.
+
+## 17. Barrido total (hilos, diálogos, voz, textos)
+
+- Lectura TXT en bucle hasta EOF (un parcial se guardaba encima del archivo).
+- `ViewModelBase.ShowError` ignora `OperationCanceledException`: la cancelación
+  rutinaria ya no pinta errores; los `CancellationToken.None` de recargas pasaron a `ct`.
+- `DialogService` serializa `ContentDialog` con semáforo y vuelve al hilo UI
+  (doble clic ya no revienta con doble diálogo).
+- Voz: `StopAsync` honesto, `ct` en creación, bandera anti-doble `StartVoice`,
+  temporales del instalador de idioma con limpieza, cancelado como aviso Info.
+- Arranque con try, `IsBusy` en cuadernos, token único FutureAccessList,
+  logs en `FileLauncherService`, sonda de escritura al guardar ruta, recargas
+  que no tapan errores, `temp` en `finally`, reciclaje de comentarios.
+- Limpieza de mojibake (tildes corruptas heredadas + algunas del transporte):
+  sangría por margen, OCR por páginas y censo de caracteres raros a cero.

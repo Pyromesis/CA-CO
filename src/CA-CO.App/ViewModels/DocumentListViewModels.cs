@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CaCo.App.Services;
 using CaCo.Application.Errors;
 using CaCo.Application.Import;
@@ -178,7 +178,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
             // Sincroniza la fila (la entidad del servicio es otra instancia).
             document.SetFavorite(newValue);
             AfterToggleFavorite(document);
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
         }
         catch (Exception ex)
         {
@@ -218,7 +218,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
             ShowInfo($"«{document.Name}» se movió a la papelera.");
         }
         catch (Exception ex)
@@ -245,7 +245,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
         }
         catch (Exception ex)
         {
@@ -289,7 +289,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
         }
         catch (Exception ex)
         {
@@ -321,7 +321,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
         }
         catch (Exception ex)
         {
@@ -635,7 +635,7 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
                 return;
             }
 
-            await RefreshNowAsync();
+            await RefreshNowAsync(ct);
             var parts = new List<string>();
             if (batch.Imported > 0)
             {
@@ -690,10 +690,10 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
     }
 
     /// <summary>Refresca aunque la operación actual mantenga <see cref="ViewModelBase.IsBusy"/>.</summary>
-    private async Task RefreshNowAsync()
+    private async Task RefreshNowAsync(CancellationToken ct)
     {
         IsBusy = false;
-        await RefreshAsync(CancellationToken.None);
+        await RefreshAsync(ct);
     }
 
     /// <summary>Importa rutas ya elegidas (drag &amp; drop desde la vista).</summary>
@@ -840,7 +840,7 @@ public sealed partial class TrashViewModel : DocumentListViewModel
             }
 
             IsBusy = false;
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
             ShowInfo($"Se eliminaron {result.Value} documento(s).");
         }
         catch (Exception ex)

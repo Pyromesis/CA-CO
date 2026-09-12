@@ -126,13 +126,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
         try
         {
             var stats = await _library.GetStatsAsync(ct);
-            StorageSummary = stats.IsSuccess
-                ? $"{stats.Value.DocumentCount} documentos • {stats.Value.NotebookCount} cuadernos • {Views.DocumentFormat.Size(stats.Value.TotalBytes)}"
-                : "No disponible";
             if (stats.IsFailure)
             {
-                System.Diagnostics.Debug.WriteLine($"Stats falló: {stats.Error.Code}");
+                StorageSummary = "No disponible";
+                ShowError(stats.Error);
+                return;
             }
+
+            StorageSummary = $"{stats.Value.DocumentCount} documentos • {stats.Value.NotebookCount} cuadernos • {Views.DocumentFormat.Size(stats.Value.TotalBytes)}";
         }
         catch (Exception ex)
         {
@@ -210,6 +211,21 @@ public sealed partial class SettingsViewModel : ViewModelBase
                     ShowError(Error.Validation("Settings.InvalidPath", "Elige una carpeta fuera de Windows."));
                     return;
                 }
+
+                // Sonda de escritura: evita guardar una ruta donde la biblioteca
+                // no podrá crearse al reiniciar (USB sin permiso, solo lectura...).
+                try
+                {
+                    Directory.CreateDirectory(full);
+                    var probe = Path.Combine(full, ".caco-write-test");
+                    await File.WriteAllTextAsync(probe, "ok", ct);
+                    File.Delete(probe);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    ShowError(Error.Validation("Settings.NotWritable", "No se puede escribir en esa carpeta. Elige otra."));
+                    return;
+                }
             }
 
             _settings.LibraryPath = trimmed;
@@ -271,9 +287,14 @@ public sealed partial class SettingsViewModel : ViewModelBase
             {
                 UpdateStatus = $"Estás al día (versión {current}).";
             }
+            else if (result.Error is not null)
+            {
+                ShowError(result.Error);
+                UpdateStatus = "No se pudo comprobar; seguirás con tu versión local.";
+            }
             else
             {
-                UpdateStatus = "No se pudo comprobar. Revisa tu conexión; seguirás con tu versión local.";
+                UpdateStatus = "No se pudo comprobar; seguirás con tu versión local.";
             }
         }
         catch (OperationCanceledException)

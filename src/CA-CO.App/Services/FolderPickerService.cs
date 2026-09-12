@@ -51,7 +51,9 @@ public sealed class FolderPickerService : IFolderPickerService
             return null;
         }
 
-        var token = StorageApplicationPermissions.FutureAccessList.Add(folder, "CaCoLibrary");
+        // AddOrReplace: un solo token fijo (Add crearía uno por vez, tope 1000).
+        const string token = "CaCoLibrary";
+        StorageApplicationPermissions.FutureAccessList.AddOrReplace(token, folder);
         return new PickedFolder(folder.Path, token);
     }
 }

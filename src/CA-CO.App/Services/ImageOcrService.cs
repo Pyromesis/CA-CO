@@ -144,7 +144,7 @@ public sealed class ImageOcrService(ILogger<ImageOcrService> logger) : IImageOcr
             }
 
             var wanted = CaCo.Application.Ocr.OcrPages.TakePages(totalPages, settings);
-            var pageTexts = new List<string?>(wanted.Count);
+            var pageTexts = new List<CaCo.Application.Ocr.PageText>(wanted.Count);
             var done = 0;
             foreach (var pageNumber in wanted)
             {
@@ -157,15 +157,15 @@ public sealed class ImageOcrService(ILogger<ImageOcrService> logger) : IImageOcr
                     var decoder = await BitmapDecoder.CreateAsync(rendered).AsTask(ct);
                     if ((long)decoder.PixelWidth * decoder.PixelHeight > 50L * 1024 * 1024)
                     {
-                        pageTexts.Add(null);
+                        pageTexts.Add(new CaCo.Application.Ocr.PageText(pageNumber, null));
                     }
                     else
                     {
                         var bitmap = await decoder.GetSoftwareBitmapAsync(
                             BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied).AsTask(ct);
                         var result = await engine.RecognizeAsync(bitmap).AsTask(ct);
-                        pageTexts.Add(string.Join(Environment.NewLine,
-                            result.Lines.Select(l => l.Text).Where(t => !string.IsNullOrWhiteSpace(t))));
+                        pageTexts.Add(new CaCo.Application.Ocr.PageText(pageNumber, string.Join(Environment.NewLine,
+                            result.Lines.Select(l => l.Text).Where(t => !string.IsNullOrWhiteSpace(t)))));
                     }
                 }
                 catch (OperationCanceledException)
@@ -176,7 +176,7 @@ public sealed class ImageOcrService(ILogger<ImageOcrService> logger) : IImageOcr
                 {
                     // Página ilegible: se salta y se sigue con el resto.
                     logger.LogDebug(ex, "OCR falló en la página {Page}.", pageNumber);
-                    pageTexts.Add(null);
+                    pageTexts.Add(new CaCo.Application.Ocr.PageText(pageNumber, null));
                 }
 
                 done++;

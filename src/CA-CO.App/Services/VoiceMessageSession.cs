@@ -119,7 +119,7 @@ public sealed class VoiceMessageSession : IVoiceMessageSession
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "No se pudo detener.");
-            return Result.Success();
+            return Result.Failure(Error.Storage("Voice.StopFailed", "No se pudo detener la grabación."));
         }
     }
 
@@ -209,8 +209,9 @@ public sealed class VoiceMessageSessionFactory(ILogger<VoiceMessageSessionFactor
             SpeechRecognizer? recognizer = null;
             try
             {
+                ct.ThrowIfCancellationRequested();
                 recognizer = new SpeechRecognizer(language);
-                await recognizer.CompileConstraintsAsync();
+                await recognizer.CompileConstraintsAsync().AsTask(ct);
                 return new VoiceMessageSession(recognizer, logger);
             }
             catch (Exception ex)

@@ -29,7 +29,8 @@ Tipos soportados en Fase 0: **PDF, PNG, JPG, JPEG, DOCX, XLSX, TXT**.
   cancelación** e **informe** (importados · duplicados · errores con motivo).
 - Cuadernos jerárquicos (árbol, anti-ciclos, borrado seguro sin pérdida),
   con columna **Sin clasificar** y **arrastrar y soltar** (archivos entre
-  cuadernos; archivos y carpetas desde el Explorador).
+  cuadernos; archivos y carpetas desde el Explorador). Cada columna tiene
+  **casillas** con añadir, seleccionar todo/nada y eliminar por lote.
 - Borrado con confirmaciones: una para la papelera ("quedará en la papelera"),
   doble para lo permanente ("de forma permanente").
 - Favoritos, papelera con restaurar/vaciar (borrado físico completo), búsqueda por nombre.

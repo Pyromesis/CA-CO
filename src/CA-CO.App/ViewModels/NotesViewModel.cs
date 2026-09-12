@@ -118,7 +118,7 @@ public sealed partial class NotesViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
             ShowInfo("Nota creada.");
         }
         catch (Exception ex)
@@ -151,7 +151,7 @@ public sealed partial class NotesViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
         }
         catch (Exception ex)
         {
@@ -183,7 +183,7 @@ public sealed partial class NotesViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
         }
         catch (Exception ex)
         {
@@ -223,7 +223,7 @@ public sealed partial class NotesViewModel : ViewModelBase
                 return;
             }
 
-            await RefreshAsync(CancellationToken.None);
+            await RefreshAsync(ct);
             ShowInfo("Nota eliminada.");
         }
         catch (Exception ex)

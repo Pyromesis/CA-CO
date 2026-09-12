@@ -86,6 +86,16 @@ public sealed class AppErrorHandler(ILogger<AppErrorHandler> logger) : IErrorHan
             };
         }
 
+        if (code is "Language.Cancelled")
+        {
+            return new UserFacingError
+            {
+                Title = "Instalación cancelada",
+                Message = "La instalación de voz y OCR se canceló. Puedes reintentarlo cuando quieras.",
+                Severity = ErrorSeverity.Info,
+            };
+        }
+
         if (code is "Notebook.Cycle" or "Notebook.SelfParent")
         {
             return new UserFacingError

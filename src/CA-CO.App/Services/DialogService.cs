@@ -52,9 +52,54 @@ public enum OcrAction
 public sealed class DialogService : IDialogService
 {
     private Window? _window;
+    private Microsoft.UI.Dispatching.DispatcherQueue? _dispatcher;
+    private readonly SemaphoreSlim _gate = new(1, 1);
+
+    /// <summary>
+    /// Muestra un diálogo en exclusiva (WinUI solo permite uno visible) y
+    /// siempre en el hilo UI (el semáforo puede cedernos otro hilo).
+    /// </summary>
+    private async Task<T> ExclusiveAsync<T>(Func<Task<T>> show)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            var queue = _dispatcher;
+            if (queue is null)
+            {
+                throw new InvalidOperationException("DialogService no inicializado.");
+            }
+
+            var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (!queue.TryEnqueue(async () =>
+            {
+                try
+                {
+                    completion.SetResult(await show().ConfigureAwait(false));
+                }
+                catch (Exception ex)
+                {
+                    completion.SetException(ex);
+                }
+            }))
+            {
+                throw new InvalidOperationException("No se pudo mostrar el diálogo.");
+            }
+
+            return await completion.Task.ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
 
     /// <inheritdoc/>
-    public void Initialize(Window window) => _window = window;
+    public void Initialize(Window window)
+    {
+        _window = window;
+        _dispatcher = window.DispatcherQueue;
+    }
 
     /// <inheritdoc/>
     public async Task<bool> ConfirmAsync(string title, string message, string confirmText = "Aceptar")
@@ -69,7 +114,7 @@ public sealed class DialogService : IDialogService
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = Root(),
         };
-        return await dialog.ShowAsync() == ContentDialogResult.Primary;
+        return await ExclusiveAsync(() => dialog.ShowAsync().AsTask()).ConfigureAwait(false) == ContentDialogResult.Primary;
     }
 
     /// <inheritdoc/>
@@ -91,7 +136,7 @@ public sealed class DialogService : IDialogService
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = Root(),
         };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        if (await ExclusiveAsync(() => dialog.ShowAsync().AsTask()).ConfigureAwait(false) != ContentDialogResult.Primary)
         {
             return null;
         }
@@ -122,7 +167,7 @@ public sealed class DialogService : IDialogService
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = Root(),
         };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        if (await ExclusiveAsync(() => dialog.ShowAsync().AsTask()).ConfigureAwait(false) != ContentDialogResult.Primary)
         {
             return null;
         }
@@ -155,7 +200,7 @@ public sealed class DialogService : IDialogService
             DefaultButton = ContentDialogButton.Primary,
             XamlRoot = Root(),
         };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+        if (await ExclusiveAsync(() => dialog.ShowAsync().AsTask()).ConfigureAwait(false) != ContentDialogResult.Primary)
         {
             return null;
         }
@@ -211,7 +256,7 @@ public sealed class DialogService : IDialogService
         txtButton.Click += OnTxt;
         try
         {
-            await dialog.ShowAsync();
+            await ExclusiveAsync(() => dialog.ShowAsync().AsTask()).ConfigureAwait(false);
             return choice;
         }
         finally
@@ -233,7 +278,7 @@ public sealed class DialogService : IDialogService
             CloseButtonText = "Aceptar",
             XamlRoot = Root(),
         };
-        await dialog.ShowAsync();
+        await ExclusiveAsync(() => dialog.ShowAsync().AsTask()).ConfigureAwait(false);
     }
 
     private void EnsureInitialized()

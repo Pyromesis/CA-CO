@@ -75,10 +75,18 @@ public sealed partial class ReaderPage : ReaderPageBase
     {
         var view = args.ItemContainer.ContentTemplateRoot as Views.CommentView
             ?? FindChild<Views.CommentView>(args.ItemContainer.ContentTemplateRoot as DependencyObject);
-        if (view is not null)
+        if (view is null)
         {
-            view.Note = args.Item as Note;
+            return;
         }
+
+        if (args.InRecycleQueue || args.Item is null)
+        {
+            view.Note = null;
+            return;
+        }
+
+        view.Note = args.Item as Note;
     }
 
     private static T? FindChild<T>(DependencyObject? root)
@@ -243,6 +251,7 @@ public sealed partial class ReaderPage : ReaderPageBase
             if ((long)bitmap.PixelWidth * bitmap.PixelHeight > maxPixels)
             {
                 System.Diagnostics.Debug.WriteLine("SaveInk: bitmap demasiado grande, se omite.");
+                ViewModel.ReportError("La anotación es demasiado grande para guardarla (máx. 50 MP).");
                 return;
             }
 
@@ -258,6 +267,7 @@ public sealed partial class ReaderPage : ReaderPageBase
             if (stream.Size > 50L * 1024 * 1024)
             {
                 System.Diagnostics.Debug.WriteLine("SaveInk: PNG demasiado grande, se omite.");
+                ViewModel.ReportError("La anotación es demasiado grande para guardarla (máx. 50 MB).");
                 return;
             }
 
@@ -271,6 +281,7 @@ public sealed partial class ReaderPage : ReaderPageBase
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"SaveInk falló (render): {ex.Message}");
+            ViewModel.ReportError("No se pudo procesar la anotación para guardarla.");
         }
     }
 }

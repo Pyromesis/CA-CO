@@ -99,9 +99,17 @@ public partial class App : Microsoft.UI.Xaml.Application
             _logger?.LogError(ex, "Fallo al inicializar la biblioteca.");
         }
 
-        // 6. Ventana principal.
-        _window = Services.GetRequiredService<MainWindow>();
-        _window.Activate();
+        // 6. Ventana principal (dentro del try: sin ventana no hay app).
+        try
+        {
+            _window = Services.GetRequiredService<MainWindow>();
+            _window.Activate();
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "No se pudo mostrar la ventana principal.");
+            throw;
+        }
     }
 
     private static async Task<string> ResolveLibraryRootAsync(CacoSettings settings)
