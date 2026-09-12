@@ -13,7 +13,7 @@ namespace CaCo.App.ViewModels;
 public sealed partial class HomeViewModel : ViewModelBase
 {
     private readonly ILibraryService _library;
-    private readonly IDocumentImporter _importer;
+    private readonly IBatchImportService _batch;
     private readonly INotebookService _notebooks;
     private readonly IFilePickerService _picker;
     private readonly IDialogService _dialogs;
@@ -23,7 +23,7 @@ public sealed partial class HomeViewModel : ViewModelBase
     public HomeViewModel(
         IErrorHandler errors,
         ILibraryService library,
-        IDocumentImporter importer,
+        IBatchImportService batch,
         INotebookService notebooks,
         IFilePickerService picker,
         IDialogService dialogs,
@@ -31,7 +31,7 @@ public sealed partial class HomeViewModel : ViewModelBase
         : base(errors)
     {
         _library = library;
-        _importer = importer;
+        _batch = batch;
         _notebooks = notebooks;
         _picker = picker;
         _dialogs = dialogs;
@@ -140,37 +140,38 @@ public sealed partial class HomeViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            var ok = 0;
-            var skipped = 0;
-            foreach (var path in picked)
+            var result = await _batch.ImportBatchAsync(picked, null, null, null, ct);
+            if (result.IsFailure)
             {
-                ct.ThrowIfCancellationRequested();
-                var result = await _importer.ImportAsync(new ImportRequest(path), ct);
-                if (result.IsFailure)
-                {
-                    ShowError(result.Error);
-                    break;
-                }
+                ShowError(result.Error);
+                return;
+            }
 
-                if (result.Value.Succeeded)
-                {
-                    ok++;
-                }
-                else if (result.Value.SkippedAsDuplicate)
-                {
-                    skipped++;
-                }
-                else if (result.Value.Error is not null)
-                {
-                    ShowError(result.Value.Error);
-                    break;
-                }
+            var batch = result.Value;
+            if (batch.RejectedByLimit)
+            {
+                ShowError(CaCo.Core.Error.Validation("Import.BatchTooLarge", batch.LimitReason ?? "Lote demasiado grande."));
+                return;
             }
 
             await RefreshNowAsync();
-            ShowInfo(skipped > 0
-                ? $"{ok} importado(s), {skipped} ya estaban en tu biblioteca."
-                : $"{ok} documento(s) importado(s).");
+            var parts = new List<string>();
+            if (batch.Imported > 0)
+            {
+                parts.Add($"{batch.Imported} importado(s)");
+            }
+
+            if (batch.Duplicates > 0)
+            {
+                parts.Add($"{batch.Duplicates} ya estaban en tu biblioteca");
+            }
+
+            if (batch.Failed > 0)
+            {
+                parts.Add($"{batch.Failed} con error");
+            }
+
+            ShowInfo(parts.Count > 0 ? string.Join(" · ", parts) + "." : "Nada que importar.");
         }
         catch (Exception ex)
         {

@@ -95,6 +95,11 @@ public abstract class NotebooksPageBase : PageBase<NotebooksViewModel>
 {
 }
 
+/// <summary>Base de la página de notas sueltas.</summary>
+public abstract class NotesPageBase : PageBase<NotesViewModel>
+{
+}
+
 /// <summary>Base de la página de favoritos.</summary>
 public abstract class FavoritesPageBase : PageBase<FavoritesViewModel>
 {

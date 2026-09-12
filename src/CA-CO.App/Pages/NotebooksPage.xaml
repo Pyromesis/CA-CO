@@ -62,11 +62,50 @@
             ColumnSpacing="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="3*" />
             </Grid.ColumnDefinitions>
 
             <Border Style="{StaticResource CacoCardBorderStyle}" Padding="8">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Glyph="&#xE8A5;" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            Style="{StaticResource CacoSectionHeaderTextStyle}"
+                            Text="Sin clasificar" />
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Arrastra al cuaderno que quieras" />
+                    <ListView
+                        AllowDrop="True"
+                        CanDragItems="True"
+                        DragItemsStarting="Unclassified_DragStarting"
+                        Drop="Unclassified_Drop"
+                        DragOver="Any_DragOver"
+                        ItemsSource="{x:Bind ViewModel.UnclassifiedDocuments, Mode=OneWay}"
+                        SelectionMode="Extended">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="domain:Document">
+                                <TextBlock
+                                    Text="{x:Bind Name, Mode=OneTime}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
+            </Border>
+
+            <Border
+                Grid.Column="1"
+                Style="{StaticResource CacoCardBorderStyle}"
+                Padding="8">
                 <ListView
                     ItemsSource="{x:Bind ViewModel.Rows, Mode=OneWay}"
                     SelectedItem="{x:Bind ViewModel.SelectedRow, Mode=TwoWay}"
@@ -79,7 +118,12 @@
                     </ListView.ItemContainerTransitions>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="vm:NotebookRow">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
+                            <StackPanel
+                                AllowDrop="True"
+                                Drop="Notebook_Drop"
+                                DragOver="Any_DragOver"
+                                Orientation="Horizontal"
+                                Spacing="8">
                                 <TextBlock
                                     VerticalAlignment="Center"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -100,11 +144,6 @@
             </Border>
 
             <Border
-                Grid.Column="1"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1,0,0,0" />
-
-            <Border
                 Grid.Column="2"
                 Style="{StaticResource CacoCardBorderStyle}"
                 VerticalAlignment="Stretch">
@@ -121,6 +160,9 @@
                             Text="{x:Bind ViewModel.SelectedNotebookName, Mode=OneWay}" />
                     </StackPanel>
                     <ListView
+                        AllowDrop="True"
+                        Drop="SelectedDocs_Drop"
+                        DragOver="Any_DragOver"
                         ContainerContentChanging="Docs_ContainerContentChanging"
                         IsItemClickEnabled="True"
                         ItemClick="Docs_ItemClick"

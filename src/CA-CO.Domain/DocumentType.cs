@@ -55,16 +55,9 @@ public static class SupportedFileTypes
     /// <summary>Filtro para <c>FileOpenPicker</c>: extensión → descripción.</summary>
     public static IReadOnlyCollection<string> FilePickerFilter => ByExtension.Keys;
 
-    /// <summary>Indica si la extensión (con o sin punto) está soportada.</summary>
-    public static bool IsSupported(string? extension)
-    {
-        if (string.IsNullOrWhiteSpace(extension))
-        {
-            return false;
-        }
-
-        return ByExtension.ContainsKey(Normalize(extension));
-    }
+    /// <summary>Indica si la extensión (con o sin punto) o la ruta de archivo está soportada.</summary>
+    public static bool IsSupported(string? extensionOrFileName) =>
+        TryGetType(extensionOrFileName, out _);
 
     /// <summary>Obtiene el <see cref="DocumentType"/> de una extensión o nombre de archivo.</summary>
     public static bool TryGetType(string? extensionOrFileName, out DocumentType type)

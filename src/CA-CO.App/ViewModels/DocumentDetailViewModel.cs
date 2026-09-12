@@ -363,11 +363,20 @@ public sealed partial class DocumentDetailViewModel : ViewModelBase
         await LoadAsync(CancellationToken.None);
     }
 
-    /// <summary>Mueve a la papelera y vuelve a Documentos.</summary>
+    /// <summary>Mueve a la papelera y vuelve a Documentos (una confirmación).</summary>
     [RelayCommand]
     private async Task MoveToTrashAsync(CancellationToken ct)
     {
         if (_document is null)
+        {
+            return;
+        }
+
+        var confirmed = await _dialogs.ConfirmAsync(
+            "Mover a la papelera",
+            $"¿Estás seguro de que quieres eliminar «{_document.Name}»? Quedará en la papelera.",
+            "Mover a la papelera");
+        if (!confirmed)
         {
             return;
         }

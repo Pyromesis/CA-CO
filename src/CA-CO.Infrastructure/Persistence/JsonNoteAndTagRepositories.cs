@@ -71,6 +71,47 @@ public sealed class JsonNoteRepository : INoteRepository
     }
 
     /// <inheritdoc/>
+    public async Task<Result<IReadOnlyList<Note>>> ListStandaloneAsync(int count, CancellationToken ct)
+    {
+        try
+        {
+            var take = Math.Clamp(count, 1, 100);
+            var items = await _store.LoadAsync(ct).ConfigureAwait(false);
+            IReadOnlyList<Note> result = items
+                .Where(n => !n.IsDeleted && n.DocumentId is null && n.NotebookId is null)
+                .OrderByDescending(n => n.ModifiedAt)
+                .Take(take)
+                .Select(n => n.ToEntity())
+                .ToList();
+            return Result.Success(result);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<IReadOnlyList<Note>>(Error.Storage("NoteRepository.ListFailed", $"No se pudieron listar notas: {ex.Message}"));
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<IReadOnlyList<Note>>> ListAllAsync(CancellationToken ct)
+    {
+        try
+        {
+            var items = await _store.LoadAsync(ct).ConfigureAwait(false);
+            IReadOnlyList<Note> result = items
+                .Where(n => !n.IsDeleted)
+                .OrderByDescending(n => n.ModifiedAt)
+                .Take(5000)
+                .Select(n => n.ToEntity())
+                .ToList();
+            return Result.Success(result);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<IReadOnlyList<Note>>(Error.Storage("NoteRepository.ListFailed", $"No se pudieron listar notas: {ex.Message}"));
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<Result> AddAsync(Note note, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(note);

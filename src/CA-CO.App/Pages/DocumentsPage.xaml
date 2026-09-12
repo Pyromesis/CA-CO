@@ -30,6 +30,24 @@
                 IsOpen="{x:Bind ViewModel.HasInfo, Mode=OneWay}"
                 Message="{x:Bind ViewModel.InfoMessage, Mode=OneWay}"
                 Severity="Success" />
+            <StackPanel
+                Spacing="6"
+                Visibility="{x:Bind ViewModel.IsImporting, Mode=OneWay}">
+                <ProgressBar
+                    Maximum="100"
+                    Value="{x:Bind ViewModel.ImportProgress, Mode=OneWay}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="{x:Bind ViewModel.ImportStatus, Mode=OneWay}" />
+                    <Button
+                        Command="{x:Bind ViewModel.CancelImportCommand, Mode=OneWay}"
+                        Content="Cancelar"
+                        Style="{StaticResource SubtleButtonStyle}" />
+                </StackPanel>
+            </StackPanel>
         </StackPanel>
 
         <StackPanel
@@ -55,9 +73,26 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox
-                PlaceholderText="Buscar por nombre..."
-                Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <StackPanel Spacing="6">
+                <TextBox
+                    PlaceholderText="Buscar en nombres, etiquetas, notas y OCR…"
+                    Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ComboBox
+                        MinWidth="130"
+                        ItemsSource="{x:Bind ViewModel.SearchTypeOptions, Mode=OneWay}"
+                        SelectedIndex="{x:Bind ViewModel.SearchTypeIndex, Mode=TwoWay}" />
+                    <ToggleButton
+                        Content="★ Favoritos"
+                        IsChecked="{x:Bind ViewModel.SearchFavoritesOnly, Mode=TwoWay}" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="{x:Bind ViewModel.SearchExplanation, Mode=OneWay}"
+                        Visibility="{x:Bind ViewModel.IsSearchResult, Mode=OneWay}" />
+                </StackPanel>
+            </StackPanel>
             <StackPanel
                 Grid.Column="1"
                 Orientation="Horizontal"
@@ -66,7 +101,10 @@
                 <Button Command="{x:Bind ViewModel.RefreshCommand, Mode=OneWay}" Content="Actualizar" />
                 <Button
                     Command="{x:Bind ViewModel.ImportCommand, Mode=OneWay}"
-                    Content="Importar"
+                    Content="Importar" />
+                <Button
+                    Command="{x:Bind ViewModel.ImportFolderCommand, Mode=OneWay}"
+                    Content="Importar carpeta"
                     Style="{StaticResource AccentButtonStyle}" />
             </StackPanel>
         </Grid>

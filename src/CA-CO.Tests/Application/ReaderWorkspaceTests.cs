@@ -49,6 +49,7 @@ public sealed class ReaderWorkspaceTests
             new SqliteDocumentRepository(new SqliteDatabase(Path.Combine(h.Paths.Database, "caco.db"))),
             new SqliteNotebookRepository(new SqliteDatabase(Path.Combine(h.Paths.Database, "caco.db"))),
             new NullThumbnailService(),
+            NullMediaInspector.Instance,
             new CacoSettings(),
             new TestClock(DateTimeOffset.UtcNow),
             NullLogger<LocalDocumentImporter>.Instance);

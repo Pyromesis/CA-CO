@@ -23,9 +23,15 @@ Tipos soportados en Fase 0: **PDF, PNG, JPG, JPEG, DOCX, XLSX, TXT**.
 - Shell Fluent (Mica) con Inicio, Documentos, Cuadernos, Favoritos, Recientes, Papelera y Configuración.
 - **Detalle de documento**: vista previa de imágenes y texto, apertura con la app
   predeterminada, mostrar en Explorador, metadatos, hash, mover entre cuadernos y etiquetas.
-- Importación individual, múltiple y por **arrastrar y soltar**, con **deduplicación
-  por SHA-256** y miniaturas de imágenes.
-- Cuadernos jerárquicos (árbol, anti-ciclos, borrado seguro sin pérdida).
+- Importación individual, múltiple, por **carpeta** (recursiva) y por
+  **arrastrar y soltar**, con **deduplicación por SHA-256**, miniaturas,
+  **límites anti-DoS** (100 archivos / 1 GB por lote), **progreso con
+  cancelación** e **informe** (importados · duplicados · errores con motivo).
+- Cuadernos jerárquicos (árbol, anti-ciclos, borrado seguro sin pérdida),
+  con columna **Sin clasificar** y **arrastrar y soltar** (archivos entre
+  cuadernos; archivos y carpetas desde el Explorador).
+- Borrado con confirmaciones: una para la papelera ("quedará en la papelera"),
+  doble para lo permanente ("de forma permanente").
 - Favoritos, papelera con restaurar/vaciar (borrado físico completo), búsqueda por nombre.
 - **SQLite** como persistencia (`Database/caco.db`, WAL, índices), con migración
   automática única desde el JSON de Fase 0.
@@ -93,8 +99,8 @@ los cambios de ubicación se aplican al reiniciar).
 ## Roadmap
 
 ```text
-FASE 0 Base ✅ → FASE 1 Almacenamiento y gestión ✅ → 2 Importación avanzada →
-3 PDF e imágenes → 4 Notas → 5 OCR → 6 Búsqueda avanzada → 7 Voz →
+FASE 0 Base ✅ → FASE 1 Almacenamiento y gestión ✅ → 2 Importación avanzada ✅ →
+3 PDF e imágenes ✅ → 4 Notas ✅ → 5 OCR ✅ → 6 Búsqueda avanzada ✅ → 7 Voz →
 8 Seguridad y cifrado → 9 Backups → 10 Nube → 11 IA
 ```
 

@@ -66,8 +66,11 @@ public static class CacoServiceCollectionExtensions
 
         // Importación y búsqueda.
         services.AddSingleton<IFileTypeValidator, FileTypeValidator>();
+        services.AddSingleton<IMediaInspector, NullMediaInspector>();
         services.AddSingleton<IDocumentImporter, LocalDocumentImporter>();
-        services.AddSingleton<ISearchService, BasicSearchService>();
+        services.AddSingleton<IBatchImportService, BatchImportService>();
+        services.AddSingleton<IFolderScanner, FolderScanner>();
+        services.AddSingleton<ISearchService, AdvancedSearchService>();
 
         // Casos de uso.
         services.AddSingleton<IDocumentService, DocumentService>();

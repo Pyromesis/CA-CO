@@ -42,6 +42,7 @@ public sealed class Phase1Tests
             documents,
             notebooks,
             new NullThumbnailService(),
+            NullMediaInspector.Instance,
             new CacoSettings(),
             clock,
             NullLogger<LocalDocumentImporter>.Instance);

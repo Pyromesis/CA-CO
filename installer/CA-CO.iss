@@ -4,7 +4,7 @@
 ; Compilar: ISCC.exe /S"casign=..." installer\CA-CO.iss
 ;   (o .\installer\Build-Installer.ps1 que lo hace todo)
 ; =============================================================
-#define AppVersion "1.1.0"
+#define AppVersion "1.2.0"
 #define Staging "staging\CA-CO"
 
 [Setup]
@@ -51,7 +51,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "deletedata"; Description: "Al desinstalar, borrar tambien la biblioteca y los ajustes (%LOCALAPPDATA%\CA-CO)"; GroupDescription: "Desinstalacion:"; Flags: unchecked
 
 [Files]
-Source: "{#Staging}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb,*.xml"
+Source: "{#Staging}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs restartreplace; Excludes: "*.pdb,*.xml"
 
 [Icons]
 Name: "{userprograms}\CA-CO"; Filename: "{app}\CaCo.App.exe"; WorkingDir: "{app}"; Comment: "Tu biblioteca personal, offline-first."

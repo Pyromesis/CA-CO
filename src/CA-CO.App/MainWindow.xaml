@@ -77,6 +77,11 @@
                         <FontIcon Glyph="&#xE8B7;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Content="Notas" Tag="notes">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE77B;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Content="Favoritos" Tag="favorites">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE734;" />

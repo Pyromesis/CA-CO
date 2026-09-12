@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using CaCo.App.Services;
 using CaCo.Application.Errors;
 using CaCo.Application.Import;
@@ -12,7 +12,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace CaCo.App.ViewModels;
 
-/// <summary>Modo del espacio de trabajo según el tipo de documento.</summary>
+/// <summary>Modo del espacio de trabajo segÃºn el tipo de documento.</summary>
 public enum ReaderKind
 {
     /// <summary>PDF (visor integrado).</summary>
@@ -30,7 +30,7 @@ public enum ReaderKind
 
 /// <summary>
 /// Espacio de trabajo del documento: visor con zoom a la izquierda,
-/// comentarios y dictado a la derecha. La edición guarda en la biblioteca.
+/// comentarios y dictado a la derecha. La ediciÃ³n guarda en la biblioteca.
 /// </summary>
 public sealed partial class ReaderViewModel : ViewModelBase
 {
@@ -87,11 +87,11 @@ public sealed partial class ReaderViewModel : ViewModelBase
         _dispatcher = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
     }
 
-    /// <summary>Título del documento.</summary>
+    /// <summary>TÃ­tulo del documento.</summary>
     [ObservableProperty]
-    private string _title = "…";
+    private string _title = "â€¦";
 
-    /// <summary>Subtítulo (tipo • tamaño • fecha).</summary>
+    /// <summary>SubtÃ­tulo (tipo â€¢ tamaÃ±o â€¢ fecha).</summary>
     [ObservableProperty]
     private string _subtitle = string.Empty;
 
@@ -131,7 +131,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
     /// <summary>Texto original cargado (para detectar cambios).</summary>
     private string _originalText = string.Empty;
 
-    /// <summary>Indica si el texto cambió sin guardar.</summary>
+    /// <summary>Indica si el texto cambiÃ³ sin guardar.</summary>
     public bool IsTextDirty => IsText && TextContent != _originalText;
 
     /// <summary>Comentarios del documento.</summary>
@@ -141,7 +141,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
     [ObservableProperty]
     private string _newComment = string.Empty;
 
-    /// <summary>Indica si se está grabando voz.</summary>
+    /// <summary>Indica si se estÃ¡ grabando voz.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsActivelyRecording))]
     [NotifyPropertyChangedFor(nameof(ShowVoicePanel))]
@@ -149,7 +149,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(VoiceStatus))]
     private bool _isRecording;
 
-    /// <summary>Indica si la grabación está en pausa.</summary>
+    /// <summary>Indica si la grabaciÃ³n estÃ¡ en pausa.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsActivelyRecording))]
     [NotifyPropertyChangedFor(nameof(ShowVoicePanel))]
@@ -165,16 +165,16 @@ public sealed partial class ReaderViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(VoiceStatus))]
     private string _voiceDraft = string.Empty;
 
-    /// <summary>Hipótesis en vivo (no definitiva).</summary>
+    /// <summary>HipÃ³tesis en vivo (no definitiva).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(VoiceLiveDisplay))]
     private string _voiceLive = string.Empty;
 
-    /// <summary>Hipótesis visible (con espacio separador).</summary>
+    /// <summary>HipÃ³tesis visible (con espacio separador).</summary>
     public string VoiceLiveDisplay =>
         string.IsNullOrWhiteSpace(VoiceLive) ? string.Empty : " " + VoiceLive.Trim();
 
-    /// <summary>Indica si hay grabación activa (sin pausa).</summary>
+    /// <summary>Indica si hay grabaciÃ³n activa (sin pausa).</summary>
     public bool IsActivelyRecording => IsRecording && !IsPaused;
 
     /// <summary>Indica si hay borrador.</summary>
@@ -183,15 +183,15 @@ public sealed partial class ReaderViewModel : ViewModelBase
     /// <summary>Indica si se muestra el panel de voz.</summary>
     public bool ShowVoicePanel => IsRecording || IsPaused || HasVoiceDraft;
 
-    /// <summary>Indica si la voz está inactiva (botón Dictar visible).</summary>
+    /// <summary>Indica si la voz estÃ¡ inactiva (botÃ³n Dictar visible).</summary>
     public bool IsVoiceIdle => !ShowVoicePanel;
 
     /// <summary>Estado textual del panel de voz.</summary>
     public string VoiceStatus => IsPaused
         ? "En pausa. Sigue, termina o elimina."
-        : IsRecording ? "Grabando… habla ahora." : "Borrador listo: termina o elimina.";
+        : IsRecording ? "Grabandoâ€¦ habla ahora." : "Borrador listo: termina o elimina.";
 
-    /// <summary>Indica si el dictado está disponible.</summary>
+    /// <summary>Indica si el dictado estÃ¡ disponible.</summary>
     [ObservableProperty]
     private bool _voiceAvailable;
 
@@ -300,7 +300,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
                     var text = new string(buffer, 0, Math.Min(read, MaxTextChars));
                     if (read > MaxTextChars)
                     {
-                        text += "\n… (truncado: el archivo es mayor de lo editable aquí)";
+                        text += "\nâ€¦ (truncado: el archivo es mayor de lo editable aquÃ­)";
                     }
 
                     TextContent = text;
@@ -389,7 +389,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
             {
                 ShowInfo(changed
                     ? "Cambios detectados y guardados en tu biblioteca."
-                    : "Sin cambios: la biblioteca ya está al día.");
+                    : "Sin cambios: la biblioteca ya estÃ¡ al dÃ­a.");
             }
         }
         catch (Exception ex)
@@ -413,7 +413,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
 
         if (pngBytes.Length > maxPngBytes)
         {
-            ShowError(Error.Validation("Reader.ImageTooLarge", "La anotación es demasiado grande (máx. 50 MB)."));
+            ShowError(Error.Validation("Reader.ImageTooLarge", "La anotaciÃ³n es demasiado grande (mÃ¡x. 50 MB)."));
             return;
         }
 
@@ -448,11 +448,11 @@ public sealed partial class ReaderViewModel : ViewModelBase
             if (!imported.Value.Succeeded || imported.Value.Document is null)
             {
                 ShowError(imported.Value.Error
-                    ?? Error.Storage("Reader.AnnotateFailed", "No se pudo guardar la anotación."));
+                    ?? Error.Storage("Reader.AnnotateFailed", "No se pudo guardar la anotaciÃ³n."));
                 return;
             }
 
-            ShowInfo("Anotación guardada como documento nuevo.");
+            ShowInfo("AnotaciÃ³n guardada como documento nuevo.");
             _navigation.NavigateTo<ReaderViewModel>(imported.Value.Document.Id);
         }
         catch (Exception ex)
@@ -465,14 +465,26 @@ public sealed partial class ReaderViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Extrae el texto de la imagen (OCR local).</summary>
+    /// <summary>Estado del OCR en curso (vacÃ­o si no hay).</summary>
+    [ObservableProperty]
+    private string _ocrStatus = string.Empty;
+
+    /// <summary>Progreso del OCR 0-100.</summary>
+    [ObservableProperty]
+    private double _ocrProgress;
+
+    /// <summary>Si hay un OCR en curso.</summary>
+    [ObservableProperty]
+    private bool _isOcrRunning;
+
+    /// <summary>Extrae el texto de la imagen o del PDF (OCR local).</summary>
     [RelayCommand]
     private async Task ExtractTextAsync(CancellationToken ct)
     {
         var path = ManagedPath();
         if (_document is null || path is null || !File.Exists(path))
         {
-            ShowError(Error.Storage("Detail.MissingFile", "El archivo ya no está en la biblioteca."));
+            ShowError(Error.Storage("Detail.MissingFile", "El archivo ya no estÃ¡ en la biblioteca."));
             return;
         }
 
@@ -480,21 +492,69 @@ public sealed partial class ReaderViewModel : ViewModelBase
         ClearMessages();
         try
         {
-            var recognized = await _ocr.RecognizeAsync(path, ct);
-            if (recognized.IsFailure)
+            string text;
+            int? ocrPages = null;
+            if (Kind == ReaderKind.Pdf)
             {
-                ShowError(recognized.Error);
-                return;
+                IsOcrRunning = true;
+                OcrStatus = "Extrayendo texto del PDFâ€¦";
+                try
+                {
+                    var progress = new Progress<CaCo.Application.Ocr.OcrProgress>(p =>
+                    {
+                        OcrProgress = p.TotalPages > 0 ? p.PagesDone * 100.0 / p.TotalPages : 0;
+                        OcrStatus = $"PÃ¡gina {p.PagesDone}/{p.TotalPages}â€¦";
+                    });
+                    var pdf = await _ocr.RecognizePdfAsync(path, null, progress, ct);
+                    if (pdf.IsFailure)
+                    {
+                        ShowError(pdf.Error);
+                        return;
+                    }
+
+                    text = pdf.Value.Text;
+                    ocrPages = pdf.Value.PagesProcessed;
+                    if (pdf.Value.Truncated)
+                    {
+                        ShowInfo("Texto parcial: el PDF supera los lÃ­mites del OCR.");
+                    }
+                }
+                finally
+                {
+                    IsOcrRunning = false;
+                    OcrProgress = 0;
+                    OcrStatus = string.Empty;
+                }
+            }
+            else
+            {
+                var recognized = await _ocr.RecognizeAsync(path, ct);
+                if (recognized.IsFailure)
+                {
+                    ShowError(recognized.Error);
+                    return;
+                }
+
+                text = recognized.Value;
+            }
+
+            if (ocrPages.HasValue)
+            {
+                var saved = await _documents.SetOcrResultAsync(_document.Id, ocrPages.Value, text, ct);
+                if (saved.IsFailure)
+                {
+                    ShowError(saved.Error);
+                }
             }
 
             IsBusy = false;
-            var action = await _dialogs.ShowOcrResultAsync(recognized.Value);
+            var action = await _dialogs.ShowOcrResultAsync(text);
             switch (action)
             {
                 case OcrAction.Copy:
                 {
                     var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
-                    package.SetText(recognized.Value);
+                    package.SetText(text);
                     Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
                     ShowInfo("Texto copiado al portapapeles.");
                     break;
@@ -502,7 +562,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
 
                 case OcrAction.SaveComment:
                 {
-                    var added = await _notes.AddToDocumentAsync(_document.Id, recognized.Value, ct);
+                    var added = await _notes.AddToDocumentAsync(_document.Id, text, ct);
                     if (added.IsFailure)
                     {
                         ShowError(added.Error);
@@ -518,7 +578,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
                 {
                     var tempPath = Path.Combine(_paths.Temp, $"ocr-{Guid.NewGuid():N}.txt");
                     Directory.CreateDirectory(_paths.Temp);
-                    await File.WriteAllTextAsync(tempPath, recognized.Value, ct).ConfigureAwait(false);
+                    await File.WriteAllTextAsync(tempPath, text, ct).ConfigureAwait(false);
                     var imported = await _importer.ImportAsync(
                         new ImportRequest(tempPath, _document.NotebookId, $"{_document.Name} (OCR)"),
                         ct).ConfigureAwait(false);
@@ -557,7 +617,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Añade el comentario escrito.</summary>
+    /// <summary>AÃ±ade el comentario escrito.</summary>
     [RelayCommand]
     private async Task AddCommentAsync(CancellationToken ct)
     {
@@ -584,7 +644,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Inserta fecha y hora en el comentario (campo rápido).</summary>
+    /// <summary>Inserta fecha y hora en el comentario (campo rÃ¡pido).</summary>
     [RelayCommand]
     private void InsertDate()
     {
@@ -633,7 +693,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
     {
         if (!await _launcher.LaunchUriAsync(new Uri("ms-settings:regionlanguage")))
         {
-            ShowError(Error.Storage("Reader.SettingsFailed", "No se pudo abrir la Configuración de Windows."));
+            ShowError(Error.Storage("Reader.SettingsFailed", "No se pudo abrir la ConfiguraciÃ³n de Windows."));
         }
     }
 
@@ -643,7 +703,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
     {
         if (!await _launcher.LaunchUriAsync(new Uri("ms-settings:privacy-speech")))
         {
-            ShowError(Error.Storage("Reader.SettingsFailed", "No se pudo abrir la Configuración de Windows."));
+            ShowError(Error.Storage("Reader.SettingsFailed", "No se pudo abrir la ConfiguraciÃ³n de Windows."));
         }
     }
 
@@ -660,7 +720,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            ShowInfo("Instalando voz y OCR: acepta el permiso y NO cierres la ventana azul hasta que diga «terminado» (varios minutos, usa Internet)…");
+            ShowInfo("Instalando voz y OCR: acepta el permiso y NO cierres la ventana azul hasta que diga Â«terminadoÂ» (varios minutos, usa Internet)â€¦");
             var result = await _language.InstallSpeechAndOcrAsync(ct);
             if (result.IsFailure)
             {
@@ -683,7 +743,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Añade texto al cuadro de comentario (dictado, pegado, selección).</summary>
+    /// <summary>AÃ±ade texto al cuadro de comentario (dictado, pegado, selecciÃ³n).</summary>
     public void AppendToComposer(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -705,19 +765,19 @@ public sealed partial class ReaderViewModel : ViewModelBase
             var content = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
             if (!content.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text))
             {
-                ShowInfo("El portapapeles no tiene texto. Cópialo antes (Ctrl+C).");
+                ShowInfo("El portapapeles no tiene texto. CÃ³pialo antes (Ctrl+C).");
                 return;
             }
 
             var text = await content.GetTextAsync().AsTask(ct);
             if (string.IsNullOrWhiteSpace(text))
             {
-                ShowInfo("El portapapeles no tiene texto. Cópialo antes (Ctrl+C).");
+                ShowInfo("El portapapeles no tiene texto. CÃ³pialo antes (Ctrl+C).");
                 return;
             }
 
             AppendToComposer(text.Trim());
-            ShowInfo("Texto pegado: revísalo y pulsa Añadir.");
+            ShowInfo("Texto pegado: revÃ­salo y pulsa AÃ±adir.");
         }
         catch (Exception ex)
         {
@@ -725,7 +785,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Elimina un comentario (con confirmación).</summary>
+    /// <summary>Elimina un comentario (con confirmaciÃ³n).</summary>
     [RelayCommand]
     private async Task DeleteCommentAsync(Note? note, CancellationToken ct)
     {
@@ -735,7 +795,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         }
 
         var confirmed = await _dialogs.ConfirmAsync(
-            "Eliminar comentario", "Se eliminará definitivamente.", "Eliminar");
+            "Eliminar comentario", "Se eliminarÃ¡ definitivamente.", "Eliminar");
         if (!confirmed)
         {
             return;
@@ -751,7 +811,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         await LoadCommentsAsync(CancellationToken.None);
     }
 
-    /// <summary>Inicia un mensaje de voz (sin límite de tiempo).</summary>
+    /// <summary>Inicia un mensaje de voz (sin lÃ­mite de tiempo).</summary>
     [RelayCommand]
     private async Task StartVoiceAsync(CancellationToken ct)
     {
@@ -770,7 +830,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         IsPaused = false;
     }
 
-    /// <summary>Pausa la grabación (conserva el borrador).</summary>
+    /// <summary>Pausa la grabaciÃ³n (conserva el borrador).</summary>
     [RelayCommand]
     private async Task PauseVoiceAsync(CancellationToken ct)
     {
@@ -784,7 +844,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         IsPaused = true;
     }
 
-    /// <summary>Sigue grabando tras pausar (continúa el borrador).</summary>
+    /// <summary>Sigue grabando tras pausar (continÃºa el borrador).</summary>
     [RelayCommand]
     private async Task ResumeVoiceAsync(CancellationToken ct)
     {
@@ -802,8 +862,8 @@ public sealed partial class ReaderViewModel : ViewModelBase
         IsPaused = false;
     }
 
-    /// <summary>Crea la sesión, la enlaza y la arranca.</summary>
-    /// <returns><c>true</c> si quedó escuchando.</returns>
+    /// <summary>Crea la sesiÃ³n, la enlaza y la arranca.</summary>
+    /// <returns><c>true</c> si quedÃ³ escuchando.</returns>
     private async Task<bool> BeginListeningAsync(CancellationToken ct)
     {
         CleanupVoiceSession();
@@ -813,7 +873,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         {
             ShowError(Error.Validation(
                 "Voice.LanguageMissing",
-                "Falta la voz en español. Pulsa «Instalar voz y OCR» aquí abajo (una vez, con Internet)."));
+                "Falta la voz en espaÃ±ol. Pulsa Â«Instalar voz y OCRÂ» aquÃ­ abajo (una vez, con Internet)."));
             return false;
         }
 
@@ -850,7 +910,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
             AppendToComposer(VoiceDraft.Trim());
             VoiceDraft = string.Empty;
             VoiceLive = string.Empty;
-            ShowInfo("Mensaje añadido: revísalo y pulsa Añadir.");
+            ShowInfo("Mensaje aÃ±adido: revÃ­salo y pulsa AÃ±adir.");
         }
     }
 
@@ -938,7 +998,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         var path = ManagedPath();
         if (path is null || !File.Exists(path))
         {
-            ShowError(Error.Storage("Detail.MissingFile", "El archivo ya no está en la biblioteca."));
+            ShowError(Error.Storage("Detail.MissingFile", "El archivo ya no estÃ¡ en la biblioteca."));
             return;
         }
 

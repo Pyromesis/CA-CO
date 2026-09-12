@@ -19,6 +19,7 @@ public sealed partial class MainWindow : Window
         ["home"] = typeof(HomeViewModel),
         ["documents"] = typeof(DocumentsViewModel),
         ["notebooks"] = typeof(NotebooksViewModel),
+        ["notes"] = typeof(NotesViewModel),
         ["favorites"] = typeof(FavoritesViewModel),
         ["recents"] = typeof(RecentsViewModel),
         ["trash"] = typeof(TrashViewModel),

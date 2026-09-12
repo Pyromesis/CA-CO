@@ -120,3 +120,87 @@ es reubicable.
 - OCR local de imágenes (`IImageOcrService` con Windows.Media.Ocr): copiar,
   guardar como comentario o como TXT nuevo. Dictado con SpeechRecognizer.
 - `RefreshFileMetadataAsync` adopta ediciones externas (Ctrl+S en el visor).
+
+## 10. Delta Fase 2 (importación avanzada)
+
+- `IBatchImportService` (`ImportBatchOptions`: 100 archivos / 1 GB): valida
+  límites ANTES de empezar (rechazo previo sin importar nada), informa
+  `IProgress<ImportProgress>`, no aborta ante fallos individuales y devuelve
+  `ImportBatchResult` (importados · duplicados · fallidos con motivo ·
+  `WasCancelled`). Los motivos pasan por `IErrorHandler` (mensajes entendibles).
+- `IFolderScanner`: recursivo opcional, solo extensiones soportadas (vía
+  `SupportedFileTypes.IsSupported`, que ahora acepta rutas completas —
+  corrección: el drag & drop filtraba todo), salta ocultos/sistema, orden
+  determinista, tope de 5000 entradas, tolera carpetas inaccesibles.
+- UI: Documentos suma "Importar carpeta" (usa `IFolderPickerService`),
+  barra de progreso con "n/m · archivo" y botón Cancelar (CTS propio);
+  informe final en InfoBar + diálogo con los primeros 10 motivos.
+  Inicio y arrastrar/soltar reutilizan el lote (límites e informe gratis).
+
+## 11. Delta Fase 3 (PDF e imágenes)
+
+- `IMediaInspector` (`Application.Storage`, `MediaInfo`, `MediaMetadataKeys`):
+  páginas PDF vía `Windows.Data.Pdf` y dimensiones vía `BitmapDecoder`
+  (verificado unpackaged: conteo, render y dimensiones funcionan sin identidad
+  de paquete). Implementación real en App (`MediaInspector`), `NullMediaInspector`
+  en Infrastructure para tests/DI base (App la sustituye en `AddCacoUi`).
+- El importador guarda `pdf.pageCount` / `image.width` / `image.height` en
+  `DocumentMetadata` (best-effort: un fallo nunca tumba la importación; solo
+  aplica al tipo correspondiente).
+- `ThumbnailService` genera miniatura de la primera página del PDF (mismo
+  conducto 256 px, tope 50 MP); el resto cae a icono con log.
+- `DocumentFormat.Subtitle` añade "N págs." o "WxH" cuando hay metadatos.
+
+## 12. Delta Fase 4 (notas)
+
+- Notas sueltas con entidad propia: `INoteRepository.ListStandaloneAsync`
+  (JSON + SQLite, `documentId/notebookId IS NULL`, tope 100) y
+  `NoteService.AddStandaloneAsync/RenameAsync` (validación vía `Note`).
+- Sección Notas en el shell (`NotesPage` + `NotesViewModel`: crear con título
+  y contenido, renombrar, editar, eliminar con confirmación).
+- Markdown ligero (`Application/Notes/MarkdownLite`, sin dependencias):
+  `#/##/###`, `**negrita**`, `*cursiva*`, `` `código` ``, listas `-/*`;
+  sin anidado ni escapes (lo sin cerrar sale literal), tope 500 bloques.
+  La UI lo dibuja con `RichTextBlock` (`MarkdownRichText`); los comentarios
+  del lector lo usan automáticamente.
+
+## 13. Delta Fase 5 (OCR)
+
+- `IImageOcrService.RecognizePdfAsync` (App): motor del sistema por página
+  (render `Windows.Data.Pdf` + `OcrEngine`), tope 20 páginas y 50 MP por
+  página renderizada, páginas ilegibles saltadas, progreso `OcrProgress`
+  y cancelación entre páginas. Verificado en vivo: motor es-ES disponible,
+  "HOLA MUNDO 123" leído exacto, PDF en blanco → `Ocr.NoText` con gracia.
+- Lógica pura en `Application/Ocr` (`PdfOcrOptions`, `OcrPages.TakePages`,
+  `Combine` con separador determinista y tope duro, `OcrMetadataKeys`).
+- `DocumentService.SetOcrResultAsync` persiste `ocr.done/pages/chars/excerpt`
+  (extracto ≤1000) como corpus para la búsqueda de Fase 6.
+- Lector: botón "Extraer texto (OCR)" también en PDFs, con barra de progreso
+  ("Página 3/12…"); al terminar ofrece copiar/comentario/TXT y guarda el OCR.
+
+## 14. Delta Fase 6 (búsqueda avanzada)
+
+- `AdvancedSearchService` (sustituye a `BasicSearchService`): multi-campo con
+  relevancia (nombre 100/70, archivo 65, etiqueta 60, nota 50, OCR 40, filtro 10),
+  orden por puntuación y fecha, tope de 2000 documentos y 5000 notas en memoria
+  (escala personal, idéntico en JSON y SQLite, sin dialectos).
+- `SearchQuery` suma `FileType?`, `FavoritesOnly`, `Tag?` y rango de fechas;
+  `SearchHit` explica cada resultado (`MatchedIn`: nombre/archivo/etiqueta/nota/OCR).
+- `INoteRepository.ListAllAsync` (JSON + SQLite) para el corpus de notas.
+- UI: Documentos filtra por tipo y favoritos y muestra "N resultados ·
+  coincide en: …"; Notas busca en título y contenido en local.
+
+## 15. Endurecimiento (clic abre documento, OCR, DnD, confirmaciones)
+
+- Causa del clic muerto: `ReaderPage` tocaba `PdfView` (con `x:Load`) en el
+  constructor y lanzaba `NullReferenceException`, tragada por `UnhandledException`
+  (visible en `%LOCALAPPDATA%\CA-CO\logs`). Regla: elementos con `x:Load`
+  solo se tocan en sus propios eventos (`Loaded="PdfView_Loaded"` + bandera
+  anti-doble). El mismo fallo bloqueaba el OCR (vive dentro del lector).
+- Cuadernos: columna Sin clasificar (`UnclassifiedOnly`), arrastre interno
+  (`CA-CO-DOCS:` por texto) y del Explorador (archivos + carpetas vía
+  `IFolderScanner` + lote con cuaderno destino); soltar en Sin clasificar
+  desclasifica. `MoveDocumentsToNotebookAsync` no aborta al primer fallo.
+- Confirmaciones: papelera una ("Quedará en la papelera"), permanente doble
+  ("de forma permanente"): cuadernos, borrado definitivo, vaciar papelera
+  y notas (sin papelera).

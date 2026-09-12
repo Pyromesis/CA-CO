@@ -33,7 +33,7 @@
             BorderThickness="1"
             CornerRadius="12"
             Spacing="4">
-            <TextBlock Text="{x:Bind Body, Mode=OneWay}" TextWrapping="Wrap" />
+            <ContentControl x:Name="BodyHost" />
             <TextBlock
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 Style="{StaticResource CaptionTextBlockStyle}"

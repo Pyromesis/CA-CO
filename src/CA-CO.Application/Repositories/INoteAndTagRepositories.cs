@@ -15,6 +15,12 @@ public interface INoteRepository
     /// <summary>Notas de un cuaderno (activas).</summary>
     Task<Result<IReadOnlyList<Note>>> ListByNotebookAsync(Guid notebookId, CancellationToken ct);
 
+    /// <summary>Todas las notas activas, recientes primero (Fase 6: tope 5000).</summary>
+    Task<Result<IReadOnlyList<Note>>> ListAllAsync(CancellationToken ct);
+
+    /// <summary>Notas sueltas (sin documento ni cuaderno), recientes primero (Fase 4).</summary>
+    Task<Result<IReadOnlyList<Note>>> ListStandaloneAsync(int count, CancellationToken ct);
+
     /// <summary>Añade una nota.</summary>
     Task<Result> AddAsync(Note note, CancellationToken ct);
 

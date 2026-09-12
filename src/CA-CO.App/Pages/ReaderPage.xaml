@@ -144,6 +144,29 @@
             </StackPanel>
 
             <StackPanel
+                x:Name="PdfTools"
+                x:Load="{x:Bind ViewModel.IsPdf, Mode=OneWay}"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button
+                    Command="{x:Bind ViewModel.ExtractTextCommand, Mode=OneWay}"
+                    Content="Extraer texto (OCR)"
+                    ToolTipService.ToolTip="Lee todas las páginas con OCR local" />
+                <ProgressBar
+                    Width="160"
+                    VerticalAlignment="Center"
+                    Maximum="100"
+                    Value="{x:Bind ViewModel.OcrProgress, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.IsOcrRunning, Mode=OneWay}" />
+                <TextBlock
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Style="{StaticResource CaptionTextBlockStyle}"
+                    Text="{x:Bind ViewModel.OcrStatus, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.IsOcrRunning, Mode=OneWay}" />
+            </StackPanel>
+
+            <StackPanel
                 x:Name="TextTools"
                 x:Load="{x:Bind ViewModel.IsTextDirty, Mode=OneWay}"
                 Orientation="Horizontal"
@@ -158,6 +181,7 @@
                 x:Name="PdfView"
                 x:Load="{x:Bind ViewModel.IsPdf, Mode=OneWay}"
                 Grid.Row="1"
+                Loaded="PdfView_Loaded"
                 Source="{x:Bind ViewModel.PdfUri, Mode=OneWay}" />
 
             <ScrollViewer

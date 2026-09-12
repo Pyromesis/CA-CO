@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using CaCo.App.Services;
 using CaCo.Application.Errors;
+using CaCo.Application.Import;
+using CaCo.Application.Repositories;
 using CaCo.Application.Services;
 using CaCo.Domain;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -43,6 +45,8 @@ public sealed partial class NotebooksViewModel : ViewModelBase
     private readonly IDocumentService _documents;
     private readonly IDialogService _dialogs;
     private readonly INavigationService _navigation;
+    private readonly IBatchImportService _batch;
+    private readonly IFolderScanner _scanner;
 
     /// <summary>Crea el ViewModel.</summary>
     public NotebooksViewModel(
@@ -50,13 +54,17 @@ public sealed partial class NotebooksViewModel : ViewModelBase
         INotebookService notebooks,
         IDocumentService documents,
         IDialogService dialogs,
-        INavigationService navigation)
+        INavigationService navigation,
+        IBatchImportService batch,
+        IFolderScanner scanner)
         : base(errors)
     {
         _notebooks = notebooks;
         _documents = documents;
         _dialogs = dialogs;
         _navigation = navigation;
+        _batch = batch;
+        _scanner = scanner;
     }
 
     /// <summary>Filas del árbol (aplanado con nivel).</summary>
@@ -64,6 +72,9 @@ public sealed partial class NotebooksViewModel : ViewModelBase
 
     /// <summary>Documentos del cuaderno seleccionado.</summary>
     public ObservableCollection<Document> SelectedDocuments { get; } = [];
+
+    /// <summary>Documentos sin cuaderno (origen para arrastrar).</summary>
+    public ObservableCollection<Document> UnclassifiedDocuments { get; } = [];
 
     /// <summary>Fila seleccionada.</summary>
     [ObservableProperty]
@@ -113,6 +124,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
             NotebookCount = all.Value.Count;
             SelectedRow = Rows.FirstOrDefault(r => r.Notebook.Id == selectedId) ?? Rows.FirstOrDefault();
             await LoadSelectedDocumentsAsync(CancellationToken.None);
+            await LoadUnclassifiedAsync(CancellationToken.None);
         }
         catch (Exception ex)
         {
@@ -227,8 +239,17 @@ public sealed partial class NotebooksViewModel : ViewModelBase
         {
             var confirmed = await _dialogs.ConfirmAsync(
                 "Eliminar cuaderno",
-                $"«{SelectedRow.Notebook.Name}» se eliminará. Sus subcuadernos subirán de nivel y sus documentos se conservarán sin clasificar.",
+                $"¿Estás seguro de que quieres eliminar «{SelectedRow.Notebook.Name}»? Sus subcuadernos subirán de nivel y sus documentos quedarán sin clasificar.",
                 "Eliminar");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            confirmed = await _dialogs.ConfirmAsync(
+                "Eliminar cuaderno",
+                $"«{SelectedRow.Notebook.Name}» se eliminará de forma permanente. Su contenido se conservará.",
+                "Eliminar definitivamente");
             if (!confirmed)
             {
                 return;
@@ -263,7 +284,7 @@ public sealed partial class NotebooksViewModel : ViewModelBase
         _lastLoadedNotebookId = SelectedRow.Notebook.Id;
 
         var docs = await _documents.ListAsync(
-            new Application.Repositories.DocumentQuery { NotebookId = SelectedRow.Notebook.Id, Page = 1, PageSize = 100 },
+            new DocumentQuery { NotebookId = SelectedRow.Notebook.Id, Page = 1, PageSize = 100 },
             ct);
         if (docs.IsFailure)
         {
@@ -274,6 +295,181 @@ public sealed partial class NotebooksViewModel : ViewModelBase
         foreach (var doc in docs.Value.Items)
         {
             SelectedDocuments.Add(doc);
+        }
+    }
+
+    private async Task LoadUnclassifiedAsync(CancellationToken ct)
+    {
+        UnclassifiedDocuments.Clear();
+        try
+        {
+            var docs = await _documents.ListAsync(
+                new DocumentQuery { UnclassifiedOnly = true, Page = 1, PageSize = 100 }, ct);
+            if (docs.IsFailure)
+            {
+                ShowError(docs.Error);
+                return;
+            }
+
+            foreach (var doc in docs.Value.Items)
+            {
+                UnclassifiedDocuments.Add(doc);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+    }
+
+    private async Task ReloadDocumentListsAsync()
+    {
+        await LoadSelectedDocumentsAsync(CancellationToken.None);
+        await LoadUnclassifiedAsync(CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Mueve documentos a un cuaderno (o los deja sin clasificar con <c>null</c>).
+    /// Lo usa el arrastrar y soltar interno.
+    /// </summary>
+    public async Task MoveDocumentsToNotebookAsync(IReadOnlyList<Guid> documentIds, Guid? notebookId, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(documentIds);
+        if (documentIds.Count == 0)
+        {
+            return;
+        }
+
+        ClearMessages();
+        IsBusy = true;
+        try
+        {
+            var moved = 0;
+            var failed = 0;
+            foreach (var id in documentIds.Distinct())
+            {
+                ct.ThrowIfCancellationRequested();
+                var result = await _documents.MoveToNotebookAsync(id, notebookId, ct);
+                if (result.IsFailure)
+                {
+                    failed++;
+                    continue;
+                }
+
+                moved++;
+            }
+
+            await ReloadDocumentListsAsync();
+            if (failed > 0)
+            {
+                ShowError(Core.Error.Storage("Notebooks.MoveFailed", $"{failed} documento(s) no se pudieron mover."));
+            }
+
+            if (moved > 0)
+            {
+                ShowInfo(notebookId.HasValue
+                    ? $"{moved} documento(s) movido(s) al cuaderno."
+                    : $"{moved} documento(s) sin clasificar.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Importa archivos y carpetas del Explorador en un cuaderno
+    /// (o sin clasificar con <c>null</c>).
+    /// </summary>
+    public async Task ImportDroppedAsync(
+        IReadOnlyList<string> filePaths,
+        IReadOnlyList<string> folderPaths,
+        Guid? notebookId,
+        CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(filePaths);
+        ArgumentNullException.ThrowIfNull(folderPaths);
+        ClearMessages();
+        IsBusy = true;
+        try
+        {
+            var all = new List<string>(filePaths.Where(p => !string.IsNullOrWhiteSpace(p)));
+            foreach (var folder in folderPaths.Where(p => !string.IsNullOrWhiteSpace(p)))
+            {
+                ct.ThrowIfCancellationRequested();
+                FolderScanResult scan;
+                try
+                {
+                    scan = await Task.Run(() => _scanner.Enumerate(folder, recursive: true, ct), ct);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    ShowError(ex);
+                    return;
+                }
+
+                all.AddRange(scan.Files);
+            }
+
+            if (all.Count == 0)
+            {
+                ShowInfo("Nada que importar: no hay documentos soportados.");
+                return;
+            }
+
+            var result = await _batch.ImportBatchAsync(all, notebookId, null, null, ct);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+                return;
+            }
+
+            var batch = result.Value;
+            if (batch.RejectedByLimit)
+            {
+                ShowError(Core.Error.Validation("Import.BatchTooLarge", batch.LimitReason ?? "Lote demasiado grande."));
+                return;
+            }
+
+            await ReloadDocumentListsAsync();
+            var parts = new List<string>();
+            if (batch.Imported > 0)
+            {
+                parts.Add($"{batch.Imported} importado(s)");
+            }
+
+            if (batch.Duplicates > 0)
+            {
+                parts.Add($"{batch.Duplicates} ya estaban");
+            }
+
+            if (batch.Failed > 0)
+            {
+                parts.Add($"{batch.Failed} con error");
+            }
+
+            ShowInfo(parts.Count > 0 ? string.Join(" · ", parts) + "." : "Nada que importar.");
+        }
+        catch (OperationCanceledException)
+        {
+            ShowInfo("Importación cancelada.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 

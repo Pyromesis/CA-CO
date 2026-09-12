@@ -31,15 +31,22 @@ public sealed partial class ReaderPage : ReaderPageBase
     public ReaderPage()
     {
         InitializeComponent();
-        PdfView.Loaded += PdfView_Loaded;
     }
+
+    private bool _pdfHardened;
 
     private async void PdfView_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
+        if (_pdfHardened || sender is not Microsoft.UI.Xaml.Controls.WebView2 pdfView)
+        {
+            return;
+        }
+
+        _pdfHardened = true;
         try
         {
-            await PdfView.EnsureCoreWebView2Async();
-            var settings = PdfView.CoreWebView2?.Settings;
+            await pdfView.EnsureCoreWebView2Async();
+            var settings = pdfView.CoreWebView2?.Settings;
             if (settings is not null)
             {
                 settings.AreDevToolsEnabled = false;
@@ -47,9 +54,9 @@ public sealed partial class ReaderPage : ReaderPageBase
                 settings.IsScriptEnabled = false;
             }
 
-            if (PdfView.CoreWebView2 is not null)
+            if (pdfView.CoreWebView2 is not null)
             {
-                PdfView.CoreWebView2.NavigationStarting += (s, args) =>
+                pdfView.CoreWebView2.NavigationStarting += (s, args) =>
                 {
                     if (!args.Uri.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
                     {

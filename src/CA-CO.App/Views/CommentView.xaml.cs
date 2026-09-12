@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using CaCo.Application.Notes;
 using CaCo.Domain;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -32,9 +33,6 @@ public sealed partial class CommentView : UserControl, INotifyPropertyChanged
         InitializeComponent();
     }
 
-    /// <summary>Contenido.</summary>
-    public string Body => Note?.Content ?? string.Empty;
-
     /// <summary>Fecha legible.</summary>
     public string DateText => Note is null
         ? string.Empty
@@ -42,7 +40,19 @@ public sealed partial class CommentView : UserControl, INotifyPropertyChanged
 
     private void OnNoteChanged()
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Body)));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DateText)));
+        RenderBody();
+    }
+
+    private void RenderBody()
+    {
+        try
+        {
+            BodyHost.Content = MarkdownRichText.Build(MarkdownLite.Parse(Note?.Content));
+        }
+        catch
+        {
+            BodyHost.Content = null;
+        }
     }
 }

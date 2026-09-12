@@ -141,6 +141,7 @@ public sealed class LocalDocumentImporter(
     IDocumentRepository documents,
     INotebookRepository notebooks,
     IThumbnailService thumbnails,
+    IMediaInspector inspector,
     CacoSettings settings,
     IClock clock,
     ILogger<LocalDocumentImporter> logger) : IDocumentImporter
@@ -265,6 +266,21 @@ public sealed class LocalDocumentImporter(
             storedCopy = await storage.CopyIntoLibraryAsync(request.SourcePath, paths.Documents, ct).ConfigureAwait(false);
             document.AttachStoredCopy(storedCopy, clock.UtcNow);
 
+            // Metadatos multimedia (Fase 3, best-effort: nunca tumban la importación).
+            try
+            {
+                var media = await inspector.InspectAsync(
+                    Path.Combine(paths.Documents, storedCopy), document.FileType, ct).ConfigureAwait(false);
+                if (media.IsSuccess && media.Value is not null)
+                {
+                    ApplyMediaMetadata(document, media.Value);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug(ex, "Sin metadatos multimedia para {FileName}.", fileName);
+            }
+
             var added = await documents.AddAsync(document, ct).ConfigureAwait(false);
             if (added.IsFailure)
             {
@@ -329,6 +345,34 @@ public sealed class LocalDocumentImporter(
             yield return result.IsSuccess
                 ? result.Value
                 : new ImportResult { Succeeded = false, SourcePath = request.SourcePath, Error = result.Error };
+        }
+    }
+
+    private static void ApplyMediaMetadata(Document document, MediaInfo media)
+    {
+        try
+        {
+            if (document.FileType == DocumentType.Pdf && media.PageCount is > 0)
+            {
+                document.Metadata.Set(MediaMetadataKeys.PdfPageCount, media.PageCount.Value.ToString());
+            }
+
+            if (document.FileType is DocumentType.Png or DocumentType.Jpg or DocumentType.Jpeg)
+            {
+                if (media.Width is > 0)
+                {
+                    document.Metadata.Set(MediaMetadataKeys.ImageWidth, media.Width.Value.ToString());
+                }
+
+                if (media.Height is > 0)
+                {
+                    document.Metadata.Set(MediaMetadataKeys.ImageHeight, media.Height.Value.ToString());
+                }
+            }
+        }
+        catch (Exception)
+        {
+            // Metadatos accesorios: se omiten sin tumbar la importación.
         }
     }
 

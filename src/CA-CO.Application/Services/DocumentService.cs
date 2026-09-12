@@ -61,6 +61,12 @@ public interface IDocumentService
     /// guardadas con Ctrl+S en el visor externo/integrado).
     /// </summary>
     Task<Result<bool>> RefreshFileMetadataAsync(Guid documentId, CancellationToken ct);
+
+    /// <summary>
+    /// Guarda el resultado del OCR en los metadatos (Fase 5; la búsqueda de
+    /// Fase 6 lo usará como corpus). Best-effort: valida y persiste.
+    /// </summary>
+    Task<Result> SetOcrResultAsync(Guid documentId, int pages, string text, CancellationToken ct);
 }
 
 /// <summary>Implementación de <see cref="IDocumentService"/> sobre repositorios.</summary>
@@ -477,6 +483,45 @@ public sealed class DocumentService(
         {
             logger.LogError(ex, "No se pudo releer el archivo de {DocumentId}", documentId);
             return Result.Failure<bool>(Error.Storage("Document.RefreshFailed", "No se pudo releer. El detalle quedó registrado."));
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result> SetOcrResultAsync(Guid documentId, int pages, string text, CancellationToken ct)
+    {
+        if (pages < 0)
+        {
+            return Result.Failure(Error.Validation("Document.InvalidOcr", "El número de páginas no es válido."));
+        }
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return Result.Failure(Error.Validation("Document.InvalidOcr", "No hay texto que guardar."));
+        }
+
+        var found = await documents.GetByIdAsync(documentId, false, ct).ConfigureAwait(false);
+        if (found.IsFailure || found.Value is null)
+        {
+            return Result.Failure(found.IsFailure ? found.Error : DomainErrors.Document.NotFound(documentId));
+        }
+
+        try
+        {
+            var document = found.Value;
+            var clean = text.Trim();
+            var excerpt = clean.Length > Ocr.OcrMetadataKeys.MaxExcerptLength
+                ? clean[..Ocr.OcrMetadataKeys.MaxExcerptLength]
+                : clean;
+            document.Metadata.Set(Ocr.OcrMetadataKeys.Done, "true");
+            document.Metadata.Set(Ocr.OcrMetadataKeys.Pages, pages.ToString());
+            document.Metadata.Set(Ocr.OcrMetadataKeys.Chars, clean.Length.ToString());
+            document.Metadata.Set(Ocr.OcrMetadataKeys.Excerpt, excerpt);
+            return await documents.UpdateAsync(document, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "No se pudo guardar el OCR de {DocumentId}", documentId);
+            return Result.Failure(Error.Storage("Document.OcrSaveFailed", "No se pudo guardar el resultado."));
         }
     }
 

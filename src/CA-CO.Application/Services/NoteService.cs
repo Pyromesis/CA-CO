@@ -19,6 +19,15 @@ public interface INoteService
 
     /// <summary>Elimina definitivamente un comentario.</summary>
     Task<Result> DeleteAsync(Guid noteId, CancellationToken ct);
+
+    /// <summary>Notas sueltas recientes, sin documento ni cuaderno (Fase 4).</summary>
+    Task<Result<IReadOnlyList<Note>>> ListStandaloneAsync(int count, CancellationToken ct);
+
+    /// <summary>Crea una nota suelta con título explícito (Fase 4).</summary>
+    Task<Result<Note>> AddStandaloneAsync(string title, string content, CancellationToken ct);
+
+    /// <summary>Renombra una nota (conserva el contenido).</summary>
+    Task<Result> RenameAsync(Guid noteId, string title, CancellationToken ct);
 }
 
 /// <summary>Implementación de <see cref="INoteService"/>.</summary>
@@ -96,4 +105,45 @@ public sealed class NoteService(
     /// <inheritdoc/>
     public Task<Result> DeleteAsync(Guid noteId, CancellationToken ct) =>
         notes.DeleteAsync(noteId, ct);
+
+    /// <inheritdoc/>
+    public Task<Result<IReadOnlyList<Note>>> ListStandaloneAsync(int count, CancellationToken ct) =>
+        notes.ListStandaloneAsync(count, ct);
+
+    /// <inheritdoc/>
+    public async Task<Result<Note>> AddStandaloneAsync(string title, string content, CancellationToken ct)
+    {
+        var created = Note.Create(title, content ?? string.Empty, null, null, clock.UtcNow);
+        if (created.IsFailure)
+        {
+            return created;
+        }
+
+        var added = await notes.AddAsync(created.Value, ct).ConfigureAwait(false);
+        if (added.IsFailure)
+        {
+            return Result.Failure<Note>(added.Error);
+        }
+
+        logger.LogInformation("Nota suelta creada: {NoteId}", created.Value.Id);
+        return created;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result> RenameAsync(Guid noteId, string title, CancellationToken ct)
+    {
+        var found = await notes.GetByIdAsync(noteId, false, ct).ConfigureAwait(false);
+        if (found.IsFailure || found.Value is null)
+        {
+            return Result.Failure(found.IsFailure ? found.Error : DomainErrors.Note.NotFound(noteId));
+        }
+
+        var renamed = found.Value.Update(title, found.Value.Content, clock.UtcNow);
+        if (renamed.IsFailure)
+        {
+            return renamed;
+        }
+
+        return await notes.UpdateAsync(found.Value, ct).ConfigureAwait(false);
+    }
 }

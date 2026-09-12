@@ -22,6 +22,8 @@ public static class UiServiceCollectionExtensions
         services.AddSingleton<ILanguageFeatureInstaller, LanguageFeatureInstaller>();
         services.AddSingleton<IImageOcrService, ImageOcrService>();
         services.AddSingleton<IThumbnailService, ThumbnailService>();
+        // Sustituye al NullMediaInspector de AddCaco (último registro gana).
+        services.AddSingleton<IMediaInspector, MediaInspector>();
         services.AddSingleton<INavigationService>(sp =>
         {
             var navigation = new NavigationService();
@@ -30,6 +32,7 @@ public static class UiServiceCollectionExtensions
             navigation.Register<DocumentDetailViewModel, DocumentDetailPage>();
             navigation.Register<ReaderViewModel, ReaderPage>();
             navigation.Register<NotebooksViewModel, NotebooksPage>();
+            navigation.Register<NotesViewModel, NotesPage>();
             navigation.Register<FavoritesViewModel, FavoritesPage>();
             navigation.Register<RecentsViewModel, RecentsPage>();
             navigation.Register<TrashViewModel, TrashPage>();
@@ -44,6 +47,7 @@ public static class UiServiceCollectionExtensions
         services.AddTransient<DocumentDetailViewModel>();
         services.AddTransient<ReaderViewModel>();
         services.AddTransient<NotebooksViewModel>();
+        services.AddTransient<NotesViewModel>();
         services.AddTransient<FavoritesViewModel>();
         services.AddTransient<RecentsViewModel>();
         services.AddTransient<TrashViewModel>();

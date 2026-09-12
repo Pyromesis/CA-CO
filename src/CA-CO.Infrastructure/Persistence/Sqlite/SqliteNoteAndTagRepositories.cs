@@ -82,6 +82,54 @@ public sealed class SqliteNoteRepository : INoteRepository
     }
 
     /// <inheritdoc/>
+    public async Task<Result<IReadOnlyList<Note>>> ListAllAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var connection = _db.Open();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"SELECT {Columns} FROM notes WHERE isDeleted = 0 ORDER BY modifiedAt DESC LIMIT 5000";
+            var items = new List<Note>();
+            using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            {
+                items.Add(Read(reader));
+            }
+
+            return Result.Success<IReadOnlyList<Note>>(items);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<IReadOnlyList<Note>>(Error.Storage("NoteRepository.ListFailed", $"No se pudieron listar notas: {ex.Message}"));
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<IReadOnlyList<Note>>> ListStandaloneAsync(int count, CancellationToken ct)
+    {
+        try
+        {
+            var take = Math.Clamp(count, 1, 100);
+            using var connection = _db.Open();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"SELECT {Columns} FROM notes WHERE isDeleted = 0 AND documentId IS NULL AND notebookId IS NULL ORDER BY modifiedAt DESC LIMIT $take";
+            cmd.Parameters.AddWithValue("$take", take);
+            var items = new List<Note>();
+            using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
+            while (await reader.ReadAsync(ct).ConfigureAwait(false))
+            {
+                items.Add(Read(reader));
+            }
+
+            return Result.Success<IReadOnlyList<Note>>(items);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<IReadOnlyList<Note>>(Error.Storage("NoteRepository.ListFailed", $"No se pudieron listar notas: {ex.Message}"));
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<Result> AddAsync(Note note, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(note);

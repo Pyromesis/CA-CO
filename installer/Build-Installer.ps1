@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
 Set-Location $repo
 
-$version = '1.1.0'
+$version = '1.2.0'
 $leafThumb = 'F9EFDA059DEAD9D684A7EBDE8F24B6E915E861D2'
 $timestamp = 'http://timestamp.digicert.com'
 

@@ -110,6 +110,7 @@ public sealed class ImportTests
             documents,
             notebooks,
             new NullThumbnailService(),
+            NullMediaInspector.Instance,
             new CacoSettings(),
             new TestClock(DateTimeOffset.UtcNow),
             NullLogger<LocalDocumentImporter>.Instance);

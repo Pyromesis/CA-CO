@@ -3,7 +3,9 @@ using CaCo.App.Services;
 using CaCo.Application.Errors;
 using CaCo.Application.Import;
 using CaCo.Application.Repositories;
+using CaCo.Application.Search;
 using CaCo.Application.Services;
+using CaCo.Core;
 using CaCo.Domain;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -189,7 +191,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
     {
     }
 
-    /// <summary>Mueve a la papelera.</summary>
+    /// <summary>Mueve a la papelera (una confirmación: queda en la papelera).</summary>
     [RelayCommand]
     protected async Task MoveToTrashAsync(Document? document, CancellationToken ct)
     {
@@ -200,6 +202,15 @@ public abstract partial class DocumentListViewModel : ViewModelBase
 
         try
         {
+            var confirmed = await Dialogs.ConfirmAsync(
+                "Mover a la papelera",
+                $"¿Estás seguro de que quieres eliminar «{document.Name}»? Quedará en la papelera.",
+                "Mover a la papelera");
+            if (!confirmed)
+            {
+                return;
+            }
+
             var result = await _documents.MoveToTrashAsync(document.Id, ct);
             if (result.IsFailure)
             {
@@ -242,7 +253,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
         }
     }
 
-    /// <summary>Elimina definitivamente (con confirmación).</summary>
+    /// <summary>Elimina definitivamente (doble confirmación: es permanente).</summary>
     [RelayCommand]
     protected async Task DeletePermanentlyAsync(Document? document, CancellationToken ct)
     {
@@ -255,8 +266,17 @@ public abstract partial class DocumentListViewModel : ViewModelBase
         {
             var confirmed = await Dialogs.ConfirmAsync(
                 "Eliminar definitivamente",
-                $"«{document.Name}» se eliminará para siempre. Esta acción no se puede deshacer.",
+                $"¿Estás seguro de que quieres eliminar «{document.Name}»?",
                 "Eliminar");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            confirmed = await Dialogs.ConfirmAsync(
+                "Eliminar definitivamente",
+                $"«{document.Name}» se eliminará de forma permanente. Esta acción no se puede deshacer.",
+                "Eliminar definitivamente");
             if (!confirmed)
             {
                 return;
@@ -329,8 +349,12 @@ public abstract partial class DocumentListViewModel : ViewModelBase
 /// <summary>Biblioteca completa + búsqueda + importación.</summary>
 public sealed partial class DocumentsViewModel : DocumentListViewModel
 {
-    private readonly IDocumentImporter _importer;
+    private readonly IBatchImportService _batch;
+    private readonly IFolderScanner _scanner;
     private readonly IFilePickerService _picker;
+    private readonly IFolderPickerService _folderPicker;
+    private readonly ISearchService _search;
+    private CancellationTokenSource? _importCts;
 
     /// <summary>Crea el ViewModel.</summary>
     public DocumentsViewModel(
@@ -338,13 +362,31 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
         IDocumentService documents,
         IDialogService dialogs,
         INavigationService navigation,
-        IDocumentImporter importer,
-        IFilePickerService picker)
+        IBatchImportService batch,
+        IFolderScanner scanner,
+        IFilePickerService picker,
+        IFolderPickerService folderPicker,
+        ISearchService search)
         : base(errors, documents, dialogs, navigation)
     {
-        _importer = importer;
+        _batch = batch;
+        _scanner = scanner;
         _picker = picker;
+        _folderPicker = folderPicker;
+        _search = search;
     }
+
+    /// <summary>Si hay una importación en curso.</summary>
+    [ObservableProperty]
+    private bool _isImporting;
+
+    /// <summary>Progreso de importación 0-100.</summary>
+    [ObservableProperty]
+    private double _importProgress;
+
+    /// <summary>Texto de progreso ("3/12 · nombre").</summary>
+    [ObservableProperty]
+    private string _importStatus = string.Empty;
 
     /// <inheritdoc/>
     public override string Title => "Documentos";
@@ -352,9 +394,47 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
     /// <inheritdoc/>
     public override string EmptyText => "Aún no hay documentos. Importa tu primer archivo para empezar.";
 
-    /// <summary>Filtro de búsqueda por nombre.</summary>
+    /// <summary>Filtro de búsqueda (nombres, etiquetas, notas, OCR).</summary>
     [ObservableProperty]
     private string _searchText = string.Empty;
+
+    /// <summary>Tipos para el filtro (índice 0 = todos).</summary>
+    public string[] SearchTypeOptions { get; } =
+        ["Todos", "PDF", "Imagen", "Word", "Excel", "Texto"];
+
+    /// <summary>Índice del tipo elegido.</summary>
+    [ObservableProperty]
+    private int _searchTypeIndex;
+
+    /// <summary>Solo favoritos.</summary>
+    [ObservableProperty]
+    private bool _searchFavoritesOnly;
+
+    /// <summary>Explicación de la última búsqueda ("7 resultados · nombre, OCR").</summary>
+    [ObservableProperty]
+    private string _searchExplanation = string.Empty;
+
+    /// <summary>Si la lista muestra resultados de búsqueda (sin "cargar más").</summary>
+    [ObservableProperty]
+    private bool _isSearchResult;
+
+    partial void OnSearchTextChanged(string value)
+    {
+        IsSearchResult = false;
+        SearchExplanation = string.Empty;
+    }
+
+    partial void OnSearchTypeIndexChanged(int value)
+    {
+        IsSearchResult = false;
+        SearchExplanation = string.Empty;
+    }
+
+    partial void OnSearchFavoritesOnlyChanged(bool value)
+    {
+        IsSearchResult = false;
+        SearchExplanation = string.Empty;
+    }
 
     /// <inheritdoc/>
     protected override DocumentQuery BuildQuery(int page) => new()
@@ -364,9 +444,82 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
         PageSize = PageSize,
     };
 
-    /// <summary>Aplica la búsqueda.</summary>
+    /// <summary>Aplica la búsqueda avanzada (o vuelve al explorado si no hay criterios).</summary>
     [RelayCommand]
-    private async Task SearchAsync(CancellationToken ct) => await RefreshAsync(ct);
+    private async Task SearchAsync(CancellationToken ct)
+    {
+        var text = SearchText?.Trim() ?? string.Empty;
+        if (text.Length == 0 && SearchTypeIndex == 0 && !SearchFavoritesOnly)
+        {
+            IsSearchResult = false;
+            SearchExplanation = string.Empty;
+            await RefreshAsync(ct);
+            return;
+        }
+
+        if (IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        ClearMessages();
+        try
+        {
+            var query = new SearchQuery
+            {
+                Text = text,
+                FileType = SearchTypeIndex switch
+                {
+                    1 => DocumentType.Pdf,
+                    // 2 = Imagen (PNG/JPG/JPEG): se filtra en memoria abajo.
+                    3 => DocumentType.Docx,
+                    4 => DocumentType.Xlsx,
+                    5 => DocumentType.Txt,
+                    _ => null,
+                },
+                FavoritesOnly = SearchFavoritesOnly,
+                MaxResults = 100,
+            };
+            // JPG/JPEG comparten filtro "Imagen".
+            var hits = await _search.SearchAdvancedAsync(query, ct);
+            if (hits.IsFailure)
+            {
+                ShowError(hits.Error);
+                return;
+            }
+
+            var list = hits.Value;
+            if (SearchTypeIndex == 2)
+            {
+                list = list.Where(h =>
+                    h.Document.FileType is DocumentType.Png or DocumentType.Jpg or DocumentType.Jpeg).ToList();
+            }
+
+            Items.Clear();
+            foreach (var hit in list)
+            {
+                Items.Add(hit.Document);
+            }
+
+            TotalCount = list.Count;
+            HasMore = false;
+            IsEmptyList = Items.Count == 0;
+            IsSearchResult = true;
+            var fields = list.SelectMany(h => h.MatchedIn).Distinct().ToList();
+            SearchExplanation = list.Count == 0
+                ? "Sin resultados. Prueba con menos filtros."
+                : $"{list.Count} resultado(s)" + (fields.Count > 0 ? $" · coincide en: {string.Join(", ", fields)}." : ".");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
     /// <summary>Importa con el selector del sistema.</summary>
     [RelayCommand]
@@ -389,36 +542,139 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
             return;
         }
 
-        IsBusy = true;
+        await RunBatchAsync(picked, ct);
+    }
+
+    /// <summary>Importa una carpeta completa (recursiva) con el selector del sistema.</summary>
+    [RelayCommand]
+    private async Task ImportFolderAsync(CancellationToken ct)
+    {
+        ClearMessages();
+        PickedFolder? folder;
         try
         {
-            var ok = 0;
-            foreach (var path in picked)
-            {
-                ct.ThrowIfCancellationRequested();
-                var result = await _importer.ImportAsync(new ImportRequest(path), ct);
-                if (result.IsFailure)
-                {
-                    ShowError(result.Error);
-                    break;
-                }
+            folder = await _folderPicker.PickFolderAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+            return;
+        }
 
-                if (result.Value.Succeeded)
-                {
-                    ok++;
-                }
-                else if (result.Value.Error is not null && !result.Value.SkippedAsDuplicate)
-                {
-                    ShowError(result.Value.Error);
-                    break;
-                }
+        if (folder is null)
+        {
+            return;
+        }
+
+        FolderScanResult scan;
+        try
+        {
+            scan = await Task.Run(() => _scanner.Enumerate(folder.Path, recursive: true, ct), ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+            return;
+        }
+
+        if (scan.Files.Count == 0)
+        {
+            ShowInfo("No hay documentos importables en esa carpeta.");
+            return;
+        }
+
+        await RunBatchAsync(scan.Files, ct);
+    }
+
+    /// <summary>Cancela la importación en curso.</summary>
+    [RelayCommand]
+    private void CancelImport()
+    {
+        _importCts?.Cancel();
+    }
+
+    /// <summary>Ejecuta un lote con progreso, cancelación e informe final.</summary>
+    private async Task RunBatchAsync(IEnumerable<string> paths, CancellationToken ct)
+    {
+        if (IsImporting)
+        {
+            return;
+        }
+
+        IsImporting = true;
+        IsBusy = true;
+        ImportProgress = 0;
+        ImportStatus = "Preparando…";
+        _importCts?.Dispose();
+        _importCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        var batchToken = _importCts.Token;
+        try
+        {
+            var progress = new Progress<ImportProgress>(p =>
+            {
+                ImportProgress = p.Total > 0 ? p.Processed * 100.0 / p.Total : 0;
+                ImportStatus = string.IsNullOrEmpty(p.CurrentName)
+                    ? $"{p.Processed}/{p.Total}"
+                    : $"{p.Processed + 1}/{p.Total} · {p.CurrentName}";
+            });
+            var result = await _batch.ImportBatchAsync(paths, null, null, progress, batchToken);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+                return;
+            }
+
+            var batch = result.Value;
+            if (batch.RejectedByLimit)
+            {
+                ShowError(Error.Validation("Import.BatchTooLarge", batch.LimitReason ?? "Lote demasiado grande."));
+                return;
             }
 
             await RefreshNowAsync();
-            if (ok > 0)
+            var parts = new List<string>();
+            if (batch.Imported > 0)
             {
-                ShowInfo($"{ok} documento(s) importado(s).");
+                parts.Add($"{batch.Imported} importado(s)");
             }
+
+            if (batch.Duplicates > 0)
+            {
+                parts.Add($"{batch.Duplicates} ya estaban");
+            }
+
+            if (batch.Failed > 0)
+            {
+                parts.Add($"{batch.Failed} con error");
+            }
+
+            var summary = parts.Count > 0 ? string.Join(" · ", parts) + "." : "Nada que importar.";
+            if (batch.WasCancelled)
+            {
+                summary = "Cancelado: " + char.ToLowerInvariant(summary[0]) + summary[1..];
+            }
+
+            ShowInfo(summary);
+            if (batch.Failures.Count > 0)
+            {
+                var details = string.Join(
+                    Environment.NewLine,
+                    batch.Failures.Take(10).Select(f => $"• {f.FileName}: {f.Reason}"));
+                if (batch.Failures.Count > 10)
+                {
+                    details += $"{Environment.NewLine}… y {batch.Failures.Count - 10} más.";
+                }
+
+                await Dialogs.ShowMessageAsync("Detalles de importación", details);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            ShowInfo("Importación cancelada.");
         }
         catch (Exception ex)
         {
@@ -426,7 +682,10 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
         }
         finally
         {
+            IsImporting = false;
             IsBusy = false;
+            ImportProgress = 0;
+            ImportStatus = string.Empty;
         }
     }
 
@@ -442,38 +701,7 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
     {
         ArgumentNullException.ThrowIfNull(paths);
         ClearMessages();
-        IsBusy = true;
-        try
-        {
-            var ok = 0;
-            var rejected = 0;
-            foreach (var path in paths)
-            {
-                ct.ThrowIfCancellationRequested();
-                var result = await _importer.ImportAsync(new ImportRequest(path), ct);
-                if (result.IsSuccess && result.Value.Succeeded)
-                {
-                    ok++;
-                }
-                else
-                {
-                    rejected++;
-                }
-            }
-
-            await RefreshNowAsync();
-            ShowInfo(rejected == 0
-                ? $"{ok} documento(s) importado(s)."
-                : $"{ok} importado(s), {rejected} no soportado(s) u omitido(s).");
-        }
-        catch (Exception ex)
-        {
-            ShowError(ex);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
+        await RunBatchAsync(paths, ct);
     }
 }
 
@@ -587,8 +815,17 @@ public sealed partial class TrashViewModel : DocumentListViewModel
         {
             var confirmed = await Dialogs.ConfirmAsync(
                 "Vaciar papelera",
-                "Se eliminarán definitivamente todos los documentos de la papelera.",
+                "¿Estás seguro de que quieres vaciar la papelera?",
                 "Vaciar");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            confirmed = await Dialogs.ConfirmAsync(
+                "Vaciar papelera",
+                "Todo el contenido de la papelera se eliminará de forma permanente.",
+                "Vaciar definitivamente");
             if (!confirmed)
             {
                 return;
