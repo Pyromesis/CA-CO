@@ -101,6 +101,9 @@ public sealed partial class DocumentItemView : UserControl, INotifyPropertyChang
         if (FavIcon is not null)
         {
             FavIcon.Glyph = Document?.IsFavorite == true ? "\uE734" : "\uE735";
+            var accent = (Microsoft.UI.Xaml.Media.Brush)Microsoft.UI.Xaml.Application.Current.Resources["CacoTintForegroundBrush"];
+            var secondary = (Microsoft.UI.Xaml.Media.Brush)Microsoft.UI.Xaml.Application.Current.Resources["TextFillColorSecondaryBrush"];
+            FavIcon.Foreground = Document?.IsFavorite == true ? accent : secondary;
         }
 
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Title)));

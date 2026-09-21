@@ -12,8 +12,8 @@ public sealed record SearchQuery
     /// <summary>Limitar a un cuaderno.</summary>
     public Guid? NotebookId { get; init; }
 
-    /// <summary>Limitar a un tipo de documento.</summary>
-    public DocumentType? FileType { get; init; }
+    /// <summary>Limitar a una serie de tipos de documento (p. ej. imágenes = PNG/JPG/JPEG).</summary>
+    public IReadOnlyList<DocumentType>? FileTypes { get; init; }
 
     /// <summary>Solo favoritos.</summary>
     public bool FavoritesOnly { get; init; }

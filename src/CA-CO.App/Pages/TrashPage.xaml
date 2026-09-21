@@ -71,7 +71,7 @@
                 </ListView.ItemContainerStyle>
                 <ListView.ItemContainerTransitions>
                     <TransitionCollection>
-                        <EntranceThemeTransition />
+                        <EntranceThemeTransition IsStaggeringEnabled="True" FromVerticalOffset="22" />
                         <ReorderThemeTransition />
                     </TransitionCollection>
                 </ListView.ItemContainerTransitions>
@@ -81,12 +81,19 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-            <TextBlock
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}"
-                Visibility="{x:Bind ViewModel.IsEmptyList, Mode=OneWay}" />
+            <Border
+                Style="{StaticResource CacoEmptyStateBorderStyle}"
+                Visibility="{x:Bind ViewModel.IsEmptyList, Mode=OneWay}">
+                <StackPanel Spacing="10">
+                    <FontIcon Glyph="&#xE74D;" Style="{StaticResource CacoEmptyStateIconStyle}" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
         </Grid>
 
         <StackPanel

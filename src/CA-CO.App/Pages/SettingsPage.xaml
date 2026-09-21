@@ -36,7 +36,7 @@
                         <FontIcon
                             VerticalAlignment="Center"
                             FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
                             Glyph="&#xE771;" />
                         <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="General" />
                     </StackPanel>
@@ -53,7 +53,7 @@
                         <FontIcon
                             VerticalAlignment="Center"
                             FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
                             Glyph="&#xEBD3;" />
                         <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Almacenamiento" />
                     </StackPanel>
@@ -92,7 +92,7 @@
                         <FontIcon
                             VerticalAlignment="Center"
                             FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
                             Glyph="&#xE895;" />
                         <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Actualizaciones" />
                     </StackPanel>
@@ -128,8 +128,8 @@
                         <FontIcon
                             VerticalAlignment="Center"
                             FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xE72E;" />
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
+                            Glyph="&#xE946;" />
                         <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Privacidad" />
                     </StackPanel>
                     <TextBlock
@@ -139,29 +139,73 @@
                 </StackPanel>
             </Border>
 
-            <StackPanel Spacing="8">
-                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Seguridad (próximamente)" />
-                <ToggleSwitch
-                    Header="Bloqueo con PIN / Windows Hello"
-                    IsEnabled="False"
-                    IsOn="False" />
-                <ToggleSwitch
-                    Header="Cifrado de la biblioteca"
-                    IsEnabled="False"
-                    IsOn="False" />
-            </StackPanel>
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
+                            Glyph="&#xE72E;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Seguridad" />
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.SecurityStatus, Mode=OneWay}"
+                        TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            Command="{x:Bind ViewModel.SetupPinCommand, Mode=OneWay}"
+                            Content="Establecer PIN"
+                            Visibility="{x:Bind ViewModel.HasNoPin, Mode=OneWay}" />
+                        <Button
+                            Command="{x:Bind ViewModel.ChangePinCommand, Mode=OneWay}"
+                            Content="Cambiar PIN"
+                            Visibility="{x:Bind ViewModel.HasPin, Mode=OneWay}" />
+                        <Button
+                            Command="{x:Bind ViewModel.RemovePinCommand, Mode=OneWay}"
+                            Content="Desactivar"
+                            Visibility="{x:Bind ViewModel.HasPin, Mode=OneWay}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            Command="{x:Bind ViewModel.EnableHelloCommand, Mode=OneWay}"
+                            Content="Activar Hello"
+                            Visibility="{x:Bind ViewModel.HasPin, Mode=OneWay}" />
+                        <Button
+                            Command="{x:Bind ViewModel.DisableHelloCommand, Mode=OneWay}"
+                            Content="Desactivar Hello"
+                            Visibility="{x:Bind ViewModel.HelloEnabled, Mode=OneWay}" />
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="El PIN se guarda como hash PBKDF2; nunca en claro. El cifrado de archivos llega en Fase 8B."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
 
-            <StackPanel Spacing="8">
-                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="OCR y voz (próximamente)" />
-                <ToggleSwitch
-                    Header="OCR automático al importar"
-                    IsEnabled="False"
-                    IsOn="False" />
-                <ToggleSwitch
-                    Header="Dictado por voz local"
-                    IsEnabled="False"
-                    IsOn="False" />
-            </StackPanel>
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
+                            Glyph="&#xE767;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Voz y OCR" />
+                    </StackPanel>
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Disponibles y funcionando: dictado por voz en los comentarios, lectura en voz alta de los TXT y extracción de texto (OCR) local de PDF e imágenes."
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Si faltan voces en español, pulsa «Instalar voz y OCR» en los comentarios del lector (una vez, con Internet)."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
 
             <StackPanel Spacing="8">
                 <TextBlock Style="{StaticResource SubtitleTextBlockStyle}" Text="Nube (próximamente)" />

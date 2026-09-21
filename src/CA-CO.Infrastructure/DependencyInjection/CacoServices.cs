@@ -81,6 +81,9 @@ public static class CacoServiceCollectionExtensions
         // Errores.
         services.AddSingleton<IErrorHandler, AppErrorHandler>();
 
+        // Bloqueo con PIN (Fase 8).
+        services.AddSingleton<Application.Security.IPinLockService, Application.Security.PinLockService>();
+
         // Actualizaciones desde GitHub Releases.
         services.AddSingleton<Application.Updates.IUpdateService, GitHubUpdateService>();
 

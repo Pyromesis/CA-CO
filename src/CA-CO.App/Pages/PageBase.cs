@@ -5,16 +5,26 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace CaCo.App.Pages;
 
+/// <summary>Acceso débilmente tipado al ViewModel de la página activa.</summary>
+public interface IPageViewModelHolder
+{
+    /// <summary>ViewModel de la página.</summary>
+    ViewModelBase ViewModel { get; }
+}
+
 /// <summary>
 /// Base de las páginas: resuelve su ViewModel del contenedor DI y lo notifica
 /// al navegar. Elimina el boilerplate de las 7 páginas.
 /// </summary>
 /// <typeparam name="TViewModel">ViewModel de la página.</typeparam>
-public abstract class PageBase<TViewModel> : Page
+public abstract class PageBase<TViewModel> : Page, IPageViewModelHolder
     where TViewModel : ViewModelBase
 {
     /// <summary>ViewModel resuelto por DI.</summary>
     protected TViewModel ViewModel { get; }
+
+    /// <summary>Acceso débilmente tipado (para el shell y la paleta de comandos).</summary>
+    ViewModelBase IPageViewModelHolder.ViewModel => ViewModel;
 
     /// <summary>Crea la página.</summary>
     protected PageBase()

@@ -19,8 +19,6 @@ Tipos soportados en Fase 0: **PDF, PNG, JPG, JPEG, DOCX, XLSX, TXT**.
   paquete de voz español está instalado; requiere micrófono).
 - Shell Fluent (Mica, beige/café) con Inicio, Documentos, Cuadernos, Favoritos,
   Recientes, Papelera y Configuración.
-
-- Shell Fluent (Mica) con Inicio, Documentos, Cuadernos, Favoritos, Recientes, Papelera y Configuración.
 - **Detalle de documento**: vista previa de imágenes y texto, apertura con la app
   predeterminada, mostrar en Explorador, metadatos, hash, mover entre cuadernos y etiquetas.
 - Importación individual, múltiple, por **carpeta** (recursiva) y por
@@ -42,7 +40,7 @@ Tipos soportados en Fase 0: **PDF, PNG, JPG, JPEG, DOCX, XLSX, TXT**.
 - **Actualizaciones integradas**: Configuración → Actualizaciones comprueba
   GitHub Releases, descarga el instalador con progreso, verifica su firma
   y actualiza reabriendo la app.
-- 74 pruebas automatizadas.
+- 123 pruebas automatizadas.
 
 ## Tecnologías
 
@@ -60,7 +58,7 @@ CA-CO
 │   ├── CA-CO.Domain         # Entidades (sin dependencias de infraestructura)
 │   ├── CA-CO.Application    # Casos de uso, puertos y abstracciones futuras
 │   ├── CA-CO.Infrastructure # JSON, archivos, logging, DI
-│   └── CA-CO.Tests          # xUnit (44 pruebas)
+│   └── CA-CO.Tests          # xUnit (123 pruebas)
 ├── docs                     # Decisiones de arquitectura
 └── assets                   # Recursos gráficos
 ```
@@ -101,8 +99,8 @@ los cambios de ubicación se aplican al reiniciar).
 
 ```text
 FASE 0 Base ✅ → FASE 1 Almacenamiento y gestión ✅ → 2 Importación avanzada ✅ →
-3 PDF e imágenes ✅ → 4 Notas ✅ → 5 OCR ✅ → 6 Búsqueda avanzada ✅ → 7 Voz →
-8 Seguridad y cifrado → 9 Backups → 10 Nube → 11 IA
+3 PDF e imágenes ✅ → 4 Notas ✅ → 5 OCR ✅ → 6 Búsqueda avanzada ✅ → 7 Voz ✅ →
+8 Seguridad ✅ → 9 Backups → 10 Nube → 11 IA
 ```
 
 Las abstracciones de OCR, voz, seguridad, nube e IA ya existen como interfaces

@@ -77,7 +77,7 @@
                             <FontIcon
                                 VerticalAlignment="Center"
                                 FontSize="16"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Foreground="{ThemeResource CacoTintForegroundBrush}"
                                 Glyph="&#xE8A5;" />
                             <TextBlock
                                 VerticalAlignment="Center"
@@ -189,7 +189,7 @@
                         SelectionMode="Single">
                         <ListView.ItemContainerTransitions>
                             <TransitionCollection>
-                                <EntranceThemeTransition />
+                                <EntranceThemeTransition IsStaggeringEnabled="True" FromVerticalOffset="22" />
                             </TransitionCollection>
                         </ListView.ItemContainerTransitions>
                         <ListView.ItemTemplate>
@@ -239,7 +239,7 @@
                             <FontIcon
                                 VerticalAlignment="Center"
                                 FontSize="16"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Foreground="{ThemeResource CacoTintForegroundBrush}"
                                 Glyph="&#xE8B7;" />
                             <TextBlock
                                 VerticalAlignment="Center"

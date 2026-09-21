@@ -8,6 +8,7 @@
     xmlns:local="using:CaCo.App.Pages"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="using:CaCo.App.Views"
+    xmlns:controls="using:CaCo.App.Controls"
     mc:Ignorable="d">
 
     <ScrollViewer Padding="32,24,32,32">
@@ -30,12 +31,13 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="200" />
                     </Grid.ColumnDefinitions>
                     <Border
                         Width="56"
                         Height="56"
                         VerticalAlignment="Center"
-                        Background="{ThemeResource CacoHeroBadgeBackgroundBrush}"
+                        Background="{ThemeResource CacoHeroGradientBrush}"
                         CornerRadius="16">
                         <FontIcon
                             HorizontalAlignment="Center"
@@ -64,11 +66,24 @@
                         Orientation="Horizontal"
                         Spacing="8">
                         <Button
+                            x:Name="ImportButton"
                             Command="{x:Bind ViewModel.ImportCommand, Mode=OneWay}"
                             Content="Importar documento"
                             Style="{StaticResource AccentButtonStyle}" />
-                        <Button Command="{x:Bind ViewModel.CreateNotebookCommand, Mode=OneWay}" Content="Crear cuaderno" />
+                        <Button
+                            x:Name="CreateNotebookButton"
+                            Command="{x:Bind ViewModel.CreateNotebookCommand, Mode=OneWay}"
+                            Content="Crear cuaderno" />
                     </StackPanel>
+
+                    <!-- Mascota: reacciona al estado de la app -->
+                    <controls:CacoMascot
+                        x:Name="Mascot"
+                        Grid.Column="3"
+                        Height="180"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Message="¡Hola! Pulsa Ctrl+K para cualquier acción." />
                 </Grid>
             </Border>
 
@@ -81,12 +96,10 @@
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Style="{StaticResource CacoCardBorderStyle}">
                     <StackPanel Spacing="6">
-                        <FontIcon
-                            HorizontalAlignment="Left"
-                            FontSize="20"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xE8A5;" />
-                        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{x:Bind ViewModel.DocumentCount, Mode=OneWay}" />
+                        <Border Background="{ThemeResource CacoTintDocumentsBrush}" Style="{StaticResource CacoStatIconBorderStyle}">
+                            <FontIcon Foreground="{ThemeResource CacoTintForegroundBrush}" Glyph="&#xE8A5;" Style="{StaticResource CacoStatIconStyle}" />
+                        </Border>
+                        <TextBlock x:Name="DocumentCountText" Style="{StaticResource CacoStatNumberTextStyle}" Text="{x:Bind ViewModel.DocumentCount, Mode=OneWay}" />
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
@@ -95,12 +108,10 @@
                 </Border>
                 <Border Grid.Column="1" Style="{StaticResource CacoCardBorderStyle}">
                     <StackPanel Spacing="6">
-                        <FontIcon
-                            HorizontalAlignment="Left"
-                            FontSize="20"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xE8B7;" />
-                        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{x:Bind ViewModel.NotebookCount, Mode=OneWay}" />
+                        <Border Background="{ThemeResource CacoTintNotebooksBrush}" Style="{StaticResource CacoStatIconBorderStyle}">
+                            <FontIcon Foreground="{ThemeResource CacoTintForegroundBrush}" Glyph="&#xE8B7;" Style="{StaticResource CacoStatIconStyle}" />
+                        </Border>
+                        <TextBlock x:Name="NotebookCountText" Style="{StaticResource CacoStatNumberTextStyle}" Text="{x:Bind ViewModel.NotebookCount, Mode=OneWay}" />
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
@@ -109,12 +120,10 @@
                 </Border>
                 <Border Grid.Column="2" Style="{StaticResource CacoCardBorderStyle}">
                     <StackPanel Spacing="6">
-                        <FontIcon
-                            HorizontalAlignment="Left"
-                            FontSize="20"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xE734;" />
-                        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{x:Bind ViewModel.FavoriteCount, Mode=OneWay}" />
+                        <Border Background="{ThemeResource CacoTintFavoritesBrush}" Style="{StaticResource CacoStatIconBorderStyle}">
+                            <FontIcon Foreground="{ThemeResource CacoTintForegroundBrush}" Glyph="&#xE734;" Style="{StaticResource CacoStatIconStyle}" />
+                        </Border>
+                        <TextBlock x:Name="FavoriteCountText" Style="{StaticResource CacoStatNumberTextStyle}" Text="{x:Bind ViewModel.FavoriteCount, Mode=OneWay}" />
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
@@ -123,12 +132,10 @@
                 </Border>
                 <Border Grid.Column="3" Style="{StaticResource CacoCardBorderStyle}">
                     <StackPanel Spacing="6">
-                        <FontIcon
-                            HorizontalAlignment="Left"
-                            FontSize="20"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Glyph="&#xEBD3;" />
-                        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{x:Bind ViewModel.TotalSizeText, Mode=OneWay}" />
+                        <Border Background="{ThemeResource CacoTintStorageBrush}" Style="{StaticResource CacoStatIconBorderStyle}">
+                            <FontIcon Foreground="{ThemeResource CacoTintForegroundBrush}" Glyph="&#xEBD3;" Style="{StaticResource CacoStatIconStyle}" />
+                        </Border>
+                        <TextBlock Style="{StaticResource CacoStatNumberTextStyle}" Text="{x:Bind ViewModel.TotalSizeText, Mode=OneWay}" />
                         <TextBlock
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             Style="{StaticResource CaptionTextBlockStyle}"
@@ -136,6 +143,21 @@
                     </StackPanel>
                 </Border>
             </Grid>
+
+            <!-- Tu biblioteca de un vistazo -->
+            <Border Style="{StaticResource CacoCardBorderStyle}">
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
+                            Glyph="&#xE713;" />
+                        <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Tu biblioteca de un vistazo" />
+                    </StackPanel>
+                    <controls:MiniBarChart x:Name="TypeChart" />
+                </StackPanel>
+            </Border>
 
             <StackPanel Orientation="Horizontal" Spacing="8">
                 <TextBlock
@@ -150,17 +172,12 @@
             </StackPanel>
 
             <Border
-                Padding="24"
-                Style="{StaticResource CacoCardBorderStyle}"
+                Style="{StaticResource CacoEmptyStateBorderStyle}"
                 Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
                 <StackPanel
                     HorizontalAlignment="Center"
-                    Spacing="8">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        FontSize="36"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Glyph="&#xE8A5;" />
+                    Spacing="10">
+                    <FontIcon Glyph="&#xE8A5;" Style="{StaticResource CacoEmptyStateIconStyle}" />
                     <TextBlock
                         HorizontalAlignment="Center"
                         FontWeight="SemiBold"
@@ -189,7 +206,7 @@
                 </ListView.ItemContainerStyle>
                 <ListView.ItemContainerTransitions>
                     <TransitionCollection>
-                        <EntranceThemeTransition />
+                        <EntranceThemeTransition IsStaggeringEnabled="True" FromVerticalOffset="22" />
                         <ReorderThemeTransition />
                     </TransitionCollection>
                 </ListView.ItemContainerTransitions>

@@ -53,6 +53,10 @@ public sealed partial class HomeViewModel : ViewModelBase
     [ObservableProperty]
     private int _favoriteCount;
 
+    /// <summary>Documentos en la papelera (para el gráfico de inicio).</summary>
+    [ObservableProperty]
+    private int _trashCount;
+
     /// <summary>Tamaño total legible (p. ej. "12,4 MB").</summary>
     [ObservableProperty]
     private string _totalSizeText = "—";
@@ -90,6 +94,7 @@ public sealed partial class HomeViewModel : ViewModelBase
             DocumentCount = stats.Value.DocumentCount;
             NotebookCount = stats.Value.NotebookCount;
             FavoriteCount = stats.Value.FavoriteCount;
+            TrashCount = stats.Value.TrashCount;
             TotalSizeText = Views.DocumentFormat.Size(stats.Value.TotalBytes);
             IsEmpty = stats.Value.DocumentCount == 0 && stats.Value.NotebookCount == 0;
 

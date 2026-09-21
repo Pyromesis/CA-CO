@@ -1,4 +1,4 @@
-ï»¿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <local:NotesPageBase
     x:Class="CaCo.App.Pages.NotesPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -52,7 +52,7 @@
                 Spacing="8">
                 <TextBox
                     MinWidth="200"
-                    PlaceholderText="Buscar notasâ€¦"
+                    PlaceholderText="Buscar notas…"
                     Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <Button Command="{x:Bind ViewModel.RefreshCommand, Mode=OneWay}" Content="Actualizar" />
                 <Button
@@ -75,7 +75,7 @@
                 </ListView.ItemContainerStyle>
                 <ListView.ItemContainerTransitions>
                     <TransitionCollection>
-                        <EntranceThemeTransition />
+                        <EntranceThemeTransition IsStaggeringEnabled="True" FromVerticalOffset="22" />
                         <ReorderThemeTransition />
                     </TransitionCollection>
                 </ListView.ItemContainerTransitions>
@@ -137,23 +137,18 @@
                 </ListView.ItemTemplate>
             </ListView>
             <Border
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Padding="24"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="12"
+                Style="{StaticResource CacoEmptyStateBorderStyle}"
                 Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay}">
-                <StackPanel Spacing="8">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        FontSize="36"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Glyph="&#xE77B;" />
+                <StackPanel Spacing="10">
+                    <FontIcon Glyph="&#xE77B;" Style="{StaticResource CacoEmptyStateIconStyle}" />
                     <TextBlock
                         HorizontalAlignment="Center"
-                        Text="AÃºn no hay notas. Crea la primera con Nueva nota."
+                        FontWeight="SemiBold"
+                        Text="Aún no hay notas" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Crea la primera con «Nueva nota»."
                         TextAlignment="Center"
                         TextWrapping="Wrap" />
                 </StackPanel>

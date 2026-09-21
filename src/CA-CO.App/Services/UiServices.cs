@@ -18,10 +18,13 @@ public static class UiServiceCollectionExtensions
         services.AddSingleton<IFolderPickerService, FolderPickerService>();
         services.AddSingleton<IFileLauncherService, FileLauncherService>();
         services.AddSingleton<IVoiceDictationService, VoiceDictationService>();
+        services.AddSingleton<IVoiceReaderService, VoiceReaderService>();
         services.AddSingleton<IVoiceMessageSessionFactory, VoiceMessageSessionFactory>();
         services.AddSingleton<ILanguageFeatureInstaller, LanguageFeatureInstaller>();
         services.AddSingleton<IImageOcrService, ImageOcrService>();
         services.AddSingleton<IThumbnailService, ThumbnailService>();
+        services.AddSingleton<IHelloService, HelloService>();
+        services.AddSingleton<CaCo.Application.Future.Security.IAuthenticationService, AppLockService>();
         // Sustituye al NullMediaInspector de AddCaco (último registro gana).
         services.AddSingleton<IMediaInspector, MediaInspector>();
         services.AddSingleton<INavigationService>(sp =>

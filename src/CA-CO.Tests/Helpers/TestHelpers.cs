@@ -2,11 +2,16 @@ using CaCo.Core;
 
 namespace CaCo.Tests.Helpers;
 
-/// <summary>Reloj fijo para pruebas deterministas.</summary>
+/// <summary>Reloj manipulable para pruebas deterministas.</summary>
 public sealed class TestClock(DateTimeOffset now) : IClock
 {
+    private DateTimeOffset _now = now;
+
     /// <inheritdoc/>
-    public DateTimeOffset UtcNow => now;
+    public DateTimeOffset UtcNow => _now;
+
+    /// <summary>Avanza el reloj.</summary>
+    public void Advance(TimeSpan delta) => _now += delta;
 }
 
 /// <summary>Carpeta temporal que se limpia al terminar.</summary>

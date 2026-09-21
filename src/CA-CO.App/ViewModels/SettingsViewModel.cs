@@ -2,6 +2,7 @@ using CaCo.App.Services;
 using CaCo.Application.Configuration;
 using CaCo.Application.Errors;
 using CaCo.Application.Services;
+using CaCo.Application.Security;
 using CaCo.Application.Storage;
 using CaCo.Application.Updates;
 using CaCo.Core;
@@ -20,6 +21,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private readonly ILibraryPaths _paths;
     private readonly IUpdateService _updates;
     private readonly IDialogService _dialogs;
+    private readonly IPinLockService _pin;
+    private readonly IHelloService _hello;
     private CacoSettings _settings;
     private UpdateRelease? _pendingRelease;
 
@@ -33,7 +36,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
         ILibraryService library,
         ILibraryPaths paths,
         IUpdateService updates,
-        IDialogService dialogs)
+        IDialogService dialogs,
+        IPinLockService pin,
+        IHelloService hello)
         : base(errors)
     {
         _configuration = configuration;
@@ -44,6 +49,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _paths = paths;
         _updates = updates;
         _dialogs = dialogs;
+        _pin = pin;
+        _hello = hello;
         _initializing = true;
         try
         {
@@ -123,6 +130,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         ClearMessages();
         EffectivePath = _paths.LibraryRoot;
+        await RefreshSecurityAsync(ct);
         try
         {
             var stats = await _library.GetStatsAsync(ct);
@@ -253,6 +261,229 @@ public sealed partial class SettingsViewModel : ViewModelBase
         LibraryPath = string.Empty;
         _settings.LibraryToken = string.Empty;
         HasChanges = true;
+    }
+
+    /// <summary>Estado de protección visible.</summary>
+    [ObservableProperty]
+    private string _securityStatus = "Sin protección";
+
+    /// <summary>Si hay PIN configurado.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoPin))]
+    private bool _hasPin;
+
+    /// <summary>Si NO hay PIN (para mostrar "Establecer").</summary>
+    public bool HasNoPin => !HasPin;
+
+    /// <summary>Si Hello está disponible en este equipo.</summary>
+    [ObservableProperty]
+    private bool _helloAvailable;
+
+    /// <summary>Si Hello está activado para desbloquear.</summary>
+    [ObservableProperty]
+    private bool _helloEnabled;
+
+    private async Task RefreshSecurityAsync(CancellationToken ct)
+    {
+        HasPin = _pin.IsPinSet;
+        HelloEnabled = _settings.Security.HelloEnabled;
+        try
+        {
+            HelloAvailable = await _hello.IsAvailableAsync();
+        }
+        catch
+        {
+            HelloAvailable = false;
+        }
+
+        SecurityStatus = !HasPin
+            ? "Sin protección: cualquiera que abra el equipo entra."
+            : HelloEnabled && HelloAvailable
+                ? "Protegido con PIN + Windows Hello."
+                : "Protegido con PIN.";
+    }
+
+    private async Task SaveSecurityAsync(CancellationToken ct)
+    {
+        try
+        {
+            await _configuration.SaveAsync(_settings, ct);
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+            return;
+        }
+
+        await RefreshSecurityAsync(CancellationToken.None);
+    }
+
+    /// <summary>Establece el PIN (pide repetir).</summary>
+    [RelayCommand]
+    private async Task SetupPinAsync(CancellationToken ct)
+    {
+        try
+        {
+            var first = await _dialogs.PromptPasswordAsync("Establecer PIN", "PIN (4-64 caracteres)");
+            if (first is null)
+            {
+                return;
+            }
+
+            var second = await _dialogs.PromptPasswordAsync("Repite el PIN", "Otra vez");
+            if (second is null)
+            {
+                return;
+            }
+
+            if (!string.Equals(first, second, StringComparison.Ordinal))
+            {
+                ShowError(Error.Validation("Pin.Mismatch", "Los PIN no coinciden. Inténtalo de nuevo."));
+                return;
+            }
+
+            var set = _pin.SetPin(first);
+            if (set.IsFailure)
+            {
+                ShowError(set.Error);
+                return;
+            }
+
+            await SaveSecurityAsync(ct);
+            ShowInfo("PIN activado. Te lo pedirá al abrir CA-CO.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+    }
+
+    /// <summary>Cambia el PIN (pide el actual).</summary>
+    [RelayCommand]
+    private async Task ChangePinAsync(CancellationToken ct)
+    {
+        try
+        {
+            if (!await VerifyCurrentPinAsync())
+            {
+                return;
+            }
+
+            var first = await _dialogs.PromptPasswordAsync("Nuevo PIN", "PIN (4-64 caracteres)");
+            if (first is null)
+            {
+                return;
+            }
+
+            var second = await _dialogs.PromptPasswordAsync("Repite el PIN", "Otra vez");
+            if (second is null)
+            {
+                return;
+            }
+
+            if (!string.Equals(first, second, StringComparison.Ordinal))
+            {
+                ShowError(Error.Validation("Pin.Mismatch", "Los PIN no coinciden. Inténtalo de nuevo."));
+                return;
+            }
+
+            var set = _pin.SetPin(first);
+            if (set.IsFailure)
+            {
+                ShowError(set.Error);
+                return;
+            }
+
+            await SaveSecurityAsync(ct);
+            ShowInfo("PIN cambiado.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+    }
+
+    /// <summary>Desactiva el bloqueo (pide el actual).</summary>
+    [RelayCommand]
+    private async Task RemovePinAsync(CancellationToken ct)
+    {
+        try
+        {
+            if (!await VerifyCurrentPinAsync())
+            {
+                return;
+            }
+
+            _pin.RemovePin();
+            await SaveSecurityAsync(ct);
+            ShowInfo("Protección desactivada.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+    }
+
+    /// <summary>Activa el desbloqueo con Windows Hello.</summary>
+    [RelayCommand]
+    private async Task EnableHelloAsync(CancellationToken ct)
+    {
+        try
+        {
+            if (!HasPin)
+            {
+                ShowError(Error.Validation("Pin.NotConfigured", "Activa primero un PIN."));
+                return;
+            }
+
+            if (!await _hello.IsAvailableAsync())
+            {
+                ShowError(Error.Validation("Hello.Unavailable", "Windows Hello no está disponible en este equipo."));
+                return;
+            }
+
+            var verified = await _hello.VerifyAsync("Activar desbloqueo con Hello en CA-CO", ct);
+            if (verified.IsFailure)
+            {
+                ShowError(verified.Error);
+                return;
+            }
+
+            _settings.Security.HelloEnabled = true;
+            await SaveSecurityAsync(ct);
+            ShowInfo("Hello activado.");
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+    }
+
+    /// <summary>Desactiva el desbloqueo con Windows Hello.</summary>
+    [RelayCommand]
+    private async Task DisableHelloAsync(CancellationToken ct)
+    {
+        _settings.Security.HelloEnabled = false;
+        await SaveSecurityAsync(ct);
+        ShowInfo("Hello desactivado. Sigue el PIN.");
+    }
+
+    private async Task<bool> VerifyCurrentPinAsync()
+    {
+        var current = await _dialogs.PromptPasswordAsync("PIN actual", "Tu PIN");
+        if (current is null)
+        {
+            return false;
+        }
+
+        var checkedPin = _pin.VerifyPin(current);
+        if (checkedPin.IsFailure)
+        {
+            ShowError(checkedPin.Error);
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>Comprueba si hay una versión nueva en GitHub Releases.</summary>

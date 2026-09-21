@@ -32,7 +32,7 @@ public sealed class AdvancedSearchService(
     {
         ArgumentNullException.ThrowIfNull(query);
         var text = query.Text?.Trim() ?? string.Empty;
-        var hasFilters = query.NotebookId.HasValue || query.FileType.HasValue
+        var hasFilters = query.NotebookId.HasValue || query.FileTypes is { Count: > 0 }
             || query.FavoritesOnly || !string.IsNullOrWhiteSpace(query.Tag)
             || query.FromUtc.HasValue || query.ToUtc.HasValue;
         if (text.Length == 0 && !hasFilters)
@@ -142,7 +142,7 @@ public sealed class AdvancedSearchService(
     private static bool PassesFilters(
         Document doc, SearchQuery query, string tagFilter, Dictionary<Guid, string> tagNames)
     {
-        if (query.FileType.HasValue && doc.FileType != query.FileType.Value)
+        if (query.FileTypes is { Count: > 0 } types && !types.Contains(doc.FileType))
         {
             return false;
         }

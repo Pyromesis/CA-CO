@@ -108,7 +108,7 @@ public sealed class SearchPhaseTests
         {
             await SeedAsync(h, cts.Token);
             var pdfs = await h.Search.SearchAdvancedAsync(
-                new SearchQuery { Text = "a", FileType = DocumentType.Pdf }, cts.Token);
+                new SearchQuery { Text = "a", FileTypes = [DocumentType.Pdf] }, cts.Token);
             Assert.All(pdfs.Value, x => Assert.Equal(DocumentType.Pdf, x.Document.FileType));
 
             var favs = await h.Search.SearchAdvancedAsync(

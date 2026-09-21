@@ -84,7 +84,7 @@
                         <FontIcon
                             VerticalAlignment="Center"
                             FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
                             Glyph="&#xE8B7;" />
                         <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Cuaderno" />
                     </StackPanel>
@@ -103,7 +103,7 @@
                         <FontIcon
                             VerticalAlignment="Center"
                             FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
                             Glyph="&#xE8EC;" />
                         <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Etiquetas" />
                     </StackPanel>
@@ -136,7 +136,7 @@
                         <FontIcon
                             VerticalAlignment="Center"
                             FontSize="16"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Foreground="{ThemeResource CacoTintForegroundBrush}"
                             Glyph="&#xE946;" />
                         <TextBlock Style="{StaticResource CacoSectionHeaderTextStyle}" Text="Ficha" />
                     </StackPanel>

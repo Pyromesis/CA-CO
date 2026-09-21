@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="CaCo.App.Views.CommandPalette"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:CaCo.App.Models"
+    IsTabStop="False"
+    mc:Ignorable="d"
+    d:DesignHeight="450"
+    d:DesignWidth="560">
+
+    <Grid>
+        <Popup
+            x:Name="PalettePopup"
+            IsLightDismissEnabled="True"
+            ShouldConstrainToRootBounds="False">
+            <Border
+                x:Name="Panel"
+                Width="560"
+                MaxHeight="440"
+                Padding="10"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1.5"
+                CornerRadius="12">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- CONSULTA -->
+                    <TextBox
+                        x:Name="QueryBox"
+                        Grid.Row="0"
+                        BorderThickness="0"
+                        CornerRadius="8"
+                        FontSize="15"
+                        KeyDown="QueryBox_KeyDown"
+                        PlaceholderText="Escribe un comando… (↑↓ navegar · Enter ejecutar · Esc cerrar)"
+                        TextChanged="QueryBox_TextChanged" />
+
+                    <Border
+                        Grid.Row="1"
+                        Height="1"
+                        Margin="0,4"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+                    <!-- RESULTADOS -->
+                    <ListView
+                        x:Name="ResultsList"
+                        Grid.Row="2"
+                        MaxHeight="360"
+                        Margin="-10,4,-10,-10"
+                        IsItemClickEnabled="True"
+                        ItemClick="ResultsList_ItemClick"
+                        KeyDown="ResultsList_KeyDown"
+                        SelectionMode="Single">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="0" />
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:PaletteCommand">
+                                <Grid Padding="10,8" ColumnSpacing="10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="28" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <FontIcon
+                                        Grid.Column="0"
+                                        VerticalAlignment="Center"
+                                        FontSize="16"
+                                        Foreground="{ThemeResource CacoTintForegroundBrush}"
+                                        Glyph="{x:Bind IconGlyph, Mode=OneTime}" />
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock FontWeight="SemiBold" Text="{x:Bind Title, Mode=OneTime}" />
+                                        <TextBlock
+                                            FontSize="11"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind Subtitle, Mode=OneTime}" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        VerticalAlignment="Center"
+                                        FontSize="11"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{x:Bind Shortcut, Mode=OneTime}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <TextBlock
+                        x:Name="EmptyHint"
+                        Grid.Row="2"
+                        Padding="20,16"
+                        FontSize="13"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="Sin resultados. Prueba con «importar», «nota» o «tema»."
+                        Visibility="Collapsed" />
+                </Grid>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

@@ -22,6 +22,9 @@ public interface IDialogService
     /// <summary>Pide un texto largo (editar comentario). <c>null</c> si se cancela.</summary>
     Task<string?> PromptMultilineTextAsync(string title, string placeholder, string initialText = "");
 
+    /// <summary>Pide una contraseña/PIN (texto oculto). <c>null</c> si se cancela.</summary>
+    Task<string?> PromptPasswordAsync(string title, string placeholder);
+
     /// <summary>Pide elegir una opción de una lista. <c>null</c> si se cancela.</summary>
     Task<T?> PromptChoiceAsync<T>(string title, IList<T> options, Func<T, string> display) where T : class;
 
@@ -173,6 +176,33 @@ public sealed class DialogService : IDialogService
         }
 
         var value = textBox.Text?.Trim();
+        return string.IsNullOrEmpty(value) ? null : value;
+    }
+
+    /// <inheritdoc/>
+    public async Task<string?> PromptPasswordAsync(string title, string placeholder)
+    {
+        EnsureInitialized();
+        var passwordBox = new PasswordBox
+        {
+            PlaceholderText = placeholder,
+            MinWidth = 280,
+        };
+        var dialog = new ContentDialog
+        {
+            Title = title,
+            Content = passwordBox,
+            PrimaryButtonText = "Aceptar",
+            CloseButtonText = "Cancelar",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = Root(),
+        };
+        if (await ExclusiveAsync(() => dialog.ShowAsync().AsTask()).ConfigureAwait(false) != ContentDialogResult.Primary)
+        {
+            return null;
+        }
+
+        var value = passwordBox.Password;
         return string.IsNullOrEmpty(value) ? null : value;
     }
 

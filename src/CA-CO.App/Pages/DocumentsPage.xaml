@@ -75,7 +75,9 @@
             </Grid.ColumnDefinitions>
             <StackPanel Spacing="6">
                 <TextBox
-                    PlaceholderText="Buscar en nombres, etiquetas, notas y OCR…"
+                    CornerRadius="8"
+                    KeyDown="SearchBox_KeyDown"
+                    PlaceholderText="Buscar en nombres, etiquetas, notas y OCR…  (Enter)"
                     Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <ComboBox
@@ -85,6 +87,14 @@
                     <ToggleButton
                         Content="★ Favoritos"
                         IsChecked="{x:Bind ViewModel.SearchFavoritesOnly, Mode=TwoWay}" />
+                    <Button
+                        AutomationProperties.Name="Limpiar búsqueda"
+                        Click="ClearSearch_Click"
+                        Style="{StaticResource SubtleButtonStyle}"
+                        ToolTipService.ToolTip="Quitar todos los filtros"
+                        Visibility="{x:Bind ViewModel.IsSearchResult, Mode=OneWay}">
+                        <FontIcon FontSize="14" Glyph="&#xE711;" />
+                    </Button>
                     <TextBlock
                         VerticalAlignment="Center"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -97,15 +107,15 @@
                 Grid.Column="1"
                 Orientation="Horizontal"
                 Spacing="8">
-                <Button Command="{x:Bind ViewModel.SearchCommand, Mode=OneWay}" Content="Buscar" />
-                <Button Command="{x:Bind ViewModel.RefreshCommand, Mode=OneWay}" Content="Actualizar" />
                 <Button
-                    Command="{x:Bind ViewModel.ImportCommand, Mode=OneWay}"
-                    Content="Importar" />
+                    Command="{x:Bind ViewModel.SearchCommand, Mode=OneWay}"
+                    Content="Buscar"
+                    Style="{StaticResource AccentButtonStyle}" />
+                <Button Command="{x:Bind ViewModel.RefreshCommand, Mode=OneWay}" Content="Actualizar" />
+                <Button Command="{x:Bind ViewModel.ImportCommand, Mode=OneWay}" Content="Importar" />
                 <Button
                     Command="{x:Bind ViewModel.ImportFolderCommand, Mode=OneWay}"
-                    Content="Importar carpeta"
-                    Style="{StaticResource AccentButtonStyle}" />
+                    Content="Importar carpeta" />
             </StackPanel>
         </Grid>
 
@@ -131,7 +141,7 @@
                 </ListView.ItemContainerStyle>
                 <ListView.ItemContainerTransitions>
                     <TransitionCollection>
-                        <EntranceThemeTransition />
+                        <EntranceThemeTransition IsStaggeringEnabled="True" FromVerticalOffset="22" />
                         <ReorderThemeTransition />
                     </TransitionCollection>
                 </ListView.ItemContainerTransitions>
@@ -144,20 +154,17 @@
             <Border
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Padding="24"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                BorderThickness="1"
-                CornerRadius="12"
+                Style="{StaticResource CacoEmptyStateBorderStyle}"
                 Visibility="{x:Bind ViewModel.IsEmptyList, Mode=OneWay}">
-                <StackPanel Spacing="8">
-                    <FontIcon
-                        HorizontalAlignment="Center"
-                        FontSize="36"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                        Glyph="&#xE8A5;" />
+                <StackPanel Spacing="10">
+                    <FontIcon Glyph="&#xE8A5;" Style="{StaticResource CacoEmptyStateIconStyle}" />
                     <TextBlock
                         HorizontalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="Sin documentos" />
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="{x:Bind ViewModel.EmptyText, Mode=OneWay}"
                         TextAlignment="Center"
                         TextWrapping="Wrap" />
@@ -165,39 +172,42 @@
             </Border>
         </Grid>
 
-        <StackPanel
-            Grid.Row="4"
-            HorizontalAlignment="Center"
-            Orientation="Horizontal"
-            Spacing="12">
-            <Button
-                Command="{x:Bind ViewModel.LoadMoreCommand, Mode=OneWay}"
-                Content="Cargar más"
-                Visibility="{x:Bind ViewModel.HasMore, Mode=OneWay}" />
-            <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
-        </StackPanel>
-
-        <Border
-            Grid.Row="4"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            Padding="10,6,10,6"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="20">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-                <FontIcon
-                    VerticalAlignment="Center"
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Glyph="&#xE896;" />
-                <TextBlock
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Style="{StaticResource CaptionTextBlockStyle}"
-                    Text="Arrastra archivos aquí para importarlos" />
+        <Grid Grid.Row="4" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="12">
+                <Button
+                    Command="{x:Bind ViewModel.LoadMoreCommand, Mode=OneWay}"
+                    Content="Cargar más"
+                    Visibility="{x:Bind ViewModel.HasMore, Mode=OneWay}" />
+                <ProgressRing IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" />
             </StackPanel>
-        </Border>
+            <Border
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Padding="10,6,10,6"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="20">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon
+                        VerticalAlignment="Center"
+                        FontSize="12"
+                        Foreground="{ThemeResource CacoTintForegroundBrush}"
+                        Glyph="&#xE896;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Text="Arrastra archivos aquí para importarlos" />
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </local:DocumentsPageBase>

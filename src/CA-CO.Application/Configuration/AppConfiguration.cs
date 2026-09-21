@@ -66,16 +66,22 @@ public sealed class PrivacySettings
     public bool TelemetryEnabled { get; set; }
 }
 
-/// <summary>Ajustes de seguridad. Reservado para Fase 8 (PIN, contraseña, Windows Hello, cifrado).</summary>
+/// <summary>Ajustes de seguridad (Fase 8: bloqueo con PIN y Windows Hello).</summary>
 public sealed class SecuritySettings
 {
-    /// <summary>Disponible a partir de Fase 8.</summary>
-    public bool Available { get; } = false;
-
-    /// <summary>Bloqueo de la aplicación.</summary>
+    /// <summary>Bloqueo de la aplicación (derivado: hay PIN configurado).</summary>
     public bool LockEnabled { get; set; }
 
-    /// <summary>Cifrado de la biblioteca.</summary>
+    /// <summary>Hash PBKDF2 del PIN (vacío = sin bloqueo).</summary>
+    public string PinHash { get; set; } = string.Empty;
+
+    /// <summary>Sal del hash del PIN.</summary>
+    public string PinSalt { get; set; } = string.Empty;
+
+    /// <summary>Permitir desbloqueo con Windows Hello.</summary>
+    public bool HelloEnabled { get; set; }
+
+    /// <summary>Cifrado de la biblioteca (próximamente, Fase 8B).</summary>
     public bool EncryptionEnabled { get; set; }
 }
 

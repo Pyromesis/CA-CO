@@ -34,6 +34,20 @@
                     <SolidColorBrush x:Key="CacoNavigationBackgroundBrush" Color="Transparent" />
                     <SolidColorBrush x:Key="CacoHeroBadgeBackgroundBrush" Color="#8A5A2B" />
                     <SolidColorBrush x:Key="CacoHeroBadgeForegroundBrush" Color="#FFFDF8" />
+                    <!-- Degradado cálido para los elementos destacados (heros y acentos). -->
+                    <LinearGradientBrush x:Key="CacoHeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Offset="0" Color="#9E6B3A" />
+                        <GradientStop Offset="0.5" Color="#8A5A2B" />
+                        <GradientStop Offset="1" Color="#74491F" />
+                    </LinearGradientBrush>
+                    <!-- Tintes suaves para los iconos de las tarjetas de estadísticas. -->
+                    <SolidColorBrush x:Key="CacoTintDocumentsBrush" Color="#F3E4CE" />
+                    <SolidColorBrush x:Key="CacoTintNotebooksBrush" Color="#EFE3D3" />
+                    <SolidColorBrush x:Key="CacoTintFavoritesBrush" Color="#F7E6D2" />
+                    <SolidColorBrush x:Key="CacoTintStorageBrush" Color="#F1E8D8" />
+                    <SolidColorBrush x:Key="CacoTintForegroundBrush" Color="#8A5A2B" />
+                    <!-- Borde de los estados vacíos (suave, que respira). -->
+                    <SolidColorBrush x:Key="CacoEmptyStateBorderBrush" Color="#E3D9C4" />
                 </ResourceDictionary>
                 <!-- Paleta café profundo para el tema oscuro: Mica luce y el caramelo contrasta. -->
                 <ResourceDictionary x:Key="Dark">
@@ -58,6 +72,17 @@
                     <SolidColorBrush x:Key="CacoNavigationBackgroundBrush" Color="Transparent" />
                     <SolidColorBrush x:Key="CacoHeroBadgeBackgroundBrush" Color="#D9A45B" />
                     <SolidColorBrush x:Key="CacoHeroBadgeForegroundBrush" Color="#211711" />
+                    <LinearGradientBrush x:Key="CacoHeroGradientBrush" StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Offset="0" Color="#EDCB8A" />
+                        <GradientStop Offset="0.5" Color="#D9A45B" />
+                        <GradientStop Offset="1" Color="#8A5A2B" />
+                    </LinearGradientBrush>
+                    <SolidColorBrush x:Key="CacoTintDocumentsBrush" Color="#3A2A18" />
+                    <SolidColorBrush x:Key="CacoTintNotebooksBrush" Color="#332616" />
+                    <SolidColorBrush x:Key="CacoTintFavoritesBrush" Color="#3D2E1A" />
+                    <SolidColorBrush x:Key="CacoTintStorageBrush" Color="#372918" />
+                    <SolidColorBrush x:Key="CacoTintForegroundBrush" Color="#D9A45B" />
+                    <SolidColorBrush x:Key="CacoEmptyStateBorderBrush" Color="#453324" />
                 </ResourceDictionary>
                 <!-- Alto contraste: respeta el sistema, solo transparenta el shell. -->
                 <ResourceDictionary x:Key="HighContrast">
@@ -66,6 +91,13 @@
                     <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
                     <SolidColorBrush x:Key="CacoAppBackgroundBrush" Color="Transparent" />
                     <SolidColorBrush x:Key="CacoNavigationBackgroundBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="CacoHeroGradientBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="CacoTintDocumentsBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="CacoTintNotebooksBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="CacoTintFavoritesBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="CacoTintStorageBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="CacoTintForegroundBrush" Color="{ThemeResource SystemColorHotTextColor}" />
+                    <SolidColorBrush x:Key="CacoEmptyStateBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <!-- Sistema de diseño CA-CO: tarjetas y ritmos compartidos. -->
@@ -78,6 +110,44 @@
             </Style>
             <Style x:Key="CacoSectionHeaderTextStyle" TargetType="TextBlock" BasedOn="{StaticResource SubtitleTextBlockStyle}">
                 <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+            <!-- Título grande de cada página, con aire encima y debajo. -->
+            <Style x:Key="CacoPageTitleTextStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}">
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+            <!-- Tarjeta de estadística: icono con fondo teñido y número grande. -->
+            <Style x:Key="CacoStatIconBorderStyle" TargetType="Border">
+                <Setter Property="Width" Value="40" />
+                <Setter Property="Height" Value="40" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="Margin" Value="0,0,0,4" />
+            </Style>
+            <Style x:Key="CacoStatIconStyle" TargetType="FontIcon">
+                <Setter Property="FontSize" Value="20" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <!-- Número grande de las estadísticas. -->
+            <Style x:Key="CacoStatNumberTextStyle" TargetType="TextBlock" BasedOn="{StaticResource TitleTextBlockStyle}">
+                <Setter Property="FontSize" Value="24" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+            <!-- Estado vacío: bloque centrado con borde punteado y icono grande. -->
+            <Style x:Key="CacoEmptyStateBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CacoEmptyStateBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Padding" Value="32,24" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <Style x:Key="CacoEmptyStateIconStyle" TargetType="FontIcon">
+                <Setter Property="FontSize" Value="40" />
+                <Setter Property="Foreground" Value="{ThemeResource CacoTintForegroundBrush}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
             </Style>
             <!-- Otros recursos de la aplicación aquí -->
         </ResourceDictionary>

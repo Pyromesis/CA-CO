@@ -18,7 +18,9 @@ namespace CaCo.App.ViewModels;
 /// </summary>
 public abstract partial class DocumentListViewModel : ViewModelBase
 {
-    private readonly IDocumentService _documents;
+    /// <summary>Servicio de documentos (compartido con las vistas derivadas).</summary>
+    protected readonly IDocumentService Documents;
+
     private readonly INavigationService _navigation;
 
     /// <summary>Servicios UI compartidos.</summary>
@@ -32,9 +34,9 @@ public abstract partial class DocumentListViewModel : ViewModelBase
         INavigationService navigation)
         : base(errors)
     {
-        _documents = documents;
-        Dialogs = dialogs;
         _navigation = navigation;
+        Documents = documents;
+        Dialogs = dialogs;
     }
 
     /// <summary>Elementos cargados.</summary>
@@ -52,14 +54,8 @@ public abstract partial class DocumentListViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isEmptyList = true;
 
-    /// <summary>Título de la sección (para la vista).</summary>
-    public abstract string Title { get; }
-
     /// <summary>Texto cuando la lista está vacía.</summary>
     public abstract string EmptyText { get; }
-
-    /// <summary>Indica si la papelera admite restaurar (solo Papelera).</summary>
-    public virtual bool CanRestore => false;
 
     /// <summary>Construye la consulta para la página indicada.</summary>
     protected abstract DocumentQuery BuildQuery(int page);
@@ -88,7 +84,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
         ClearMessages();
         try
         {
-            var result = await _documents.ListAsync(BuildQuery(1), ct);
+            var result = await Documents.ListAsync(BuildQuery(1), ct);
             if (result.IsFailure)
             {
                 ShowError(result.Error);
@@ -129,7 +125,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
         try
         {
             var nextPage = _currentPage + 1;
-            var result = await _documents.ListAsync(BuildQuery(nextPage), ct);
+            var result = await Documents.ListAsync(BuildQuery(nextPage), ct);
             if (result.IsFailure)
             {
                 ShowError(result.Error);
@@ -168,7 +164,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
         var newValue = !document.IsFavorite;
         try
         {
-            var result = await _documents.SetFavoriteAsync(document.Id, newValue, ct);
+            var result = await Documents.SetFavoriteAsync(document.Id, newValue, ct);
             if (result.IsFailure)
             {
                 ShowError(result.Error);
@@ -211,7 +207,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
                 return;
             }
 
-            var result = await _documents.MoveToTrashAsync(document.Id, ct);
+            var result = await Documents.MoveToTrashAsync(document.Id, ct);
             if (result.IsFailure)
             {
                 ShowError(result.Error);
@@ -238,7 +234,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
 
         try
         {
-            var result = await _documents.RestoreAsync(document.Id, ct);
+            var result = await Documents.RestoreAsync(document.Id, ct);
             if (result.IsFailure)
             {
                 ShowError(result.Error);
@@ -282,7 +278,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
                 return;
             }
 
-            var result = await _documents.DeletePermanentlyAsync(document.Id, ct);
+            var result = await Documents.DeletePermanentlyAsync(document.Id, ct);
             if (result.IsFailure)
             {
                 ShowError(result.Error);
@@ -314,7 +310,7 @@ public abstract partial class DocumentListViewModel : ViewModelBase
                 return;
             }
 
-            var result = await _documents.RenameAsync(document.Id, name, ct);
+            var result = await Documents.RenameAsync(document.Id, name, ct);
             if (result.IsFailure)
             {
                 ShowError(result.Error);
@@ -328,10 +324,6 @@ public abstract partial class DocumentListViewModel : ViewModelBase
             ShowError(ex);
         }
     }
-
-    /// <summary>Quita el aviso de error/info.</summary>
-    [RelayCommand]
-    private void DismissMessages() => ClearMessages();
 
     /// <summary>Abre el detalle del documento.</summary>
     [RelayCommand]
@@ -387,9 +379,6 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
     /// <summary>Texto de progreso ("3/12 · nombre").</summary>
     [ObservableProperty]
     private string _importStatus = string.Empty;
-
-    /// <inheritdoc/>
-    public override string Title => "Documentos";
 
     /// <inheritdoc/>
     public override string EmptyText => "Aún no hay documentos. Importa tu primer archivo para empezar.";
@@ -469,19 +458,21 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
             var query = new SearchQuery
             {
                 Text = text,
-                FileType = SearchTypeIndex switch
+                // "Imagen" agrupa PNG, JPG y JPEG: el filtro lo aplica el servicio,
+                // no aquí, para no perder resultados más allá del límite.
+                FileTypes = SearchTypeIndex switch
                 {
-                    1 => DocumentType.Pdf,
-                    // 2 = Imagen (PNG/JPG/JPEG): se filtra en memoria abajo.
-                    3 => DocumentType.Docx,
-                    4 => DocumentType.Xlsx,
-                    5 => DocumentType.Txt,
+                    1 => [DocumentType.Pdf],
+                    2 => [DocumentType.Png, DocumentType.Jpg, DocumentType.Jpeg],
+                    3 => [DocumentType.Docx],
+                    4 => [DocumentType.Xlsx],
+                    5 => [DocumentType.Txt],
                     _ => null,
                 },
                 FavoritesOnly = SearchFavoritesOnly,
                 MaxResults = 100,
             };
-            // JPG/JPEG comparten filtro "Imagen".
+
             var hits = await _search.SearchAdvancedAsync(query, ct);
             if (hits.IsFailure)
             {
@@ -490,11 +481,6 @@ public sealed partial class DocumentsViewModel : DocumentListViewModel
             }
 
             var list = hits.Value;
-            if (SearchTypeIndex == 2)
-            {
-                list = list.Where(h =>
-                    h.Document.FileType is DocumentType.Png or DocumentType.Jpg or DocumentType.Jpeg).ToList();
-            }
 
             Items.Clear();
             foreach (var hit in list)
@@ -719,9 +705,6 @@ public sealed class FavoritesViewModel : DocumentListViewModel
     }
 
     /// <inheritdoc/>
-    public override string Title => "Favoritos";
-
-    /// <inheritdoc/>
     public override string EmptyText => "Aún no tienes favoritos. Marca documentos con la estrella para verlos aquí.";
 
     /// <inheritdoc/>
@@ -757,9 +740,6 @@ public sealed class RecentsViewModel : DocumentListViewModel
     }
 
     /// <inheritdoc/>
-    public override string Title => "Recientes";
-
-    /// <inheritdoc/>
     public override string EmptyText => "Nada por aquí todavía. Los documentos que importes aparecerán aquí.";
 
     /// <inheritdoc/>
@@ -776,8 +756,6 @@ public sealed class RecentsViewModel : DocumentListViewModel
 /// <summary>Papelera: restaurar, eliminar o vaciar.</summary>
 public sealed partial class TrashViewModel : DocumentListViewModel
 {
-    private readonly IDocumentService _documents;
-
     /// <summary>Crea el ViewModel.</summary>
     public TrashViewModel(
         IErrorHandler errors,
@@ -786,17 +764,10 @@ public sealed partial class TrashViewModel : DocumentListViewModel
         INavigationService navigation)
         : base(errors, documents, dialogs, navigation)
     {
-        _documents = documents;
     }
 
     /// <inheritdoc/>
-    public override string Title => "Papelera";
-
-    /// <inheritdoc/>
     public override string EmptyText => "La papelera está vacía.";
-
-    /// <inheritdoc/>
-    public override bool CanRestore => true;
 
     /// <inheritdoc/>
     protected override DocumentQuery BuildQuery(int page) => new()
@@ -832,7 +803,7 @@ public sealed partial class TrashViewModel : DocumentListViewModel
             }
 
             IsBusy = true;
-            var result = await _documents.EmptyTrashAsync(ct);
+            var result = await Documents.EmptyTrashAsync(ct);
             if (result.IsFailure)
             {
                 ShowError(result.Error);

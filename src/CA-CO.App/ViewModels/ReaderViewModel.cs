@@ -44,6 +44,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
     private readonly IDialogService _dialogs;
     private readonly IFileLauncherService _launcher;
     private readonly IVoiceDictationService _voice;
+    private readonly IVoiceReaderService _reader;
     private readonly IVoiceMessageSessionFactory _voiceFactory;
     private readonly IImageOcrService _ocr;
     private readonly ILanguageFeatureInstaller _language;
@@ -66,6 +67,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         IDialogService dialogs,
         IFileLauncherService launcher,
         IVoiceDictationService voice,
+        IVoiceReaderService reader,
         IVoiceMessageSessionFactory voiceFactory,
         IImageOcrService ocr,
         ILanguageFeatureInstaller language,
@@ -80,6 +82,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         _dialogs = dialogs;
         _launcher = launcher;
         _voice = voice;
+        _reader = reader;
         _voiceFactory = voiceFactory;
         _ocr = ocr;
         _language = language;
@@ -165,6 +168,20 @@ public sealed partial class ReaderViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(VoiceStatus))]
     private string _voiceDraft = string.Empty;
 
+    /// <summary>Si se está leyendo el texto en voz alta.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotReading))]
+    private bool _isReading;
+
+    /// <summary>Si NO se está leyendo (para alternar botones).</summary>
+    public bool IsNotReading => !IsReading;
+
+    /// <summary>Nombre de la voz de lectura (vacío si no hay).</summary>
+    [ObservableProperty]
+    private string _voiceName = string.Empty;
+
+    private CancellationTokenSource? _speakUiCts;
+
     /// <summary>Hipótesis en vivo (no definitiva).</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(VoiceLiveDisplay))]
@@ -234,7 +251,32 @@ public sealed partial class ReaderViewModel : ViewModelBase
 
         IsRecording = false;
         IsPaused = false;
+        StopReading();
         await Task.CompletedTask;
+    }
+
+    /// <summary>Detiene la lectura en voz alta sin avisar.</summary>
+    private void StopReading()
+    {
+        try
+        {
+            _speakUiCts?.Cancel();
+        }
+        catch
+        {
+        }
+
+        _speakUiCts?.Dispose();
+        _speakUiCts = null;
+        try
+        {
+            _reader.Stop();
+        }
+        catch
+        {
+        }
+
+        IsReading = false;
     }
 
     /// <summary>Carga documento, vista y comentarios.</summary>
@@ -249,6 +291,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
         IsBusy = true;
         ClearMessages();
         CleanupVoiceSession();
+        StopReading();
         IsRecording = false;
         IsPaused = false;
         VoiceDraft = string.Empty;
@@ -319,6 +362,7 @@ public sealed partial class ReaderViewModel : ViewModelBase
             }
 
             VoiceAvailable = await _voice.IsAvailableAsync();
+            VoiceName = (await _reader.IsAvailableAsync()) ? _reader.VoiceDisplayName : string.Empty;
             await LoadCommentsAsync(ct);
         }
         catch (Exception ex)
@@ -994,6 +1038,76 @@ public sealed partial class ReaderViewModel : ViewModelBase
         VoiceDraft = string.Empty;
         VoiceLive = string.Empty;
         ClearMessages();
+    }
+
+    /// <summary>Lee el texto en voz alta (Fase 7).</summary>
+    [RelayCommand]
+    private async Task SpeakTextAsync(CancellationToken ct)
+    {
+        if (IsReading || Kind != ReaderKind.Text || string.IsNullOrWhiteSpace(TextContent))
+        {
+            return;
+        }
+
+        ClearMessages();
+        if (!await _reader.IsAvailableAsync())
+        {
+            ShowError(Error.Validation(
+                "Voice.LanguageMissing",
+                "Falta la voz en español. Pulsa «Instalar voz y OCR» en los comentarios (una vez, con Internet)."));
+            return;
+        }
+
+        IsReading = true;
+        _speakUiCts?.Dispose();
+        _speakUiCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _reader.ReadingFinished += OnReadingFinished;
+        try
+        {
+            var result = await _reader.SpeakAsync(TextContent, _speakUiCts.Token);
+            if (result.IsFailure)
+            {
+                ShowError(result.Error);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Detenido por el usuario o al salir: sin ruido.
+        }
+        catch (Exception ex)
+        {
+            ShowError(ex);
+        }
+        finally
+        {
+            _reader.ReadingFinished -= OnReadingFinished;
+            IsReading = false;
+        }
+    }
+
+    /// <summary>Detiene la lectura en voz alta.</summary>
+    [RelayCommand]
+    private void StopReadingAloud()
+    {
+        if (!IsReading)
+        {
+            return;
+        }
+
+        StopReading();
+        ShowInfo("Lectura detenida.");
+    }
+
+    private void OnReadingFinished(object? sender, EventArgs e)
+    {
+        var dispatcher = _dispatcher ?? Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+        if (dispatcher is null)
+        {
+            IsReading = false;
+            return;
+        }
+
+        dispatcher.TryEnqueue(() => IsReading = false);
     }
 
     private void OnVoiceFinal(object? sender, string text)

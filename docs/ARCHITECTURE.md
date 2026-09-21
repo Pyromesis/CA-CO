@@ -233,3 +233,24 @@ es reubicable.
   que no tapan errores, `temp` en `finally`, reciclaje de comentarios.
 - Limpieza de mojibake (tildes corruptas heredadas + algunas del transporte):
   sangría por margen, OCR por páginas y censo de caracteres raros a cero.
+
+## 18. Delta Fase 7 (voz)
+
+- Lectura en voz alta (`IVoiceReaderService` con `SpeechSynthesizer` +
+  `MediaPlayer`, sin elemento UI): voz es-ES preferida (aquí "Microsoft Pablo"),
+  troceado por frases (`SpeechChunking`, 4000 caracteres, testado), parar al
+  navegar/recargar, nombre de la voz visible. Verificado en vivo: sintetiza
+  y reproduce, vacío → `Voice.EmptyText` limpio.
+- El dictado ya existía; se suma `IsNotReading`/botones Escuchar/Detener.
+
+## 19. Delta Fase 8 (bloqueo PIN + Hello)
+
+- PIN con PBKDF2-SHA256 (210k iteraciones, sal de 16 B, comparación en
+  tiempo constante) y espera de 30 s tras 5 fallos (`PinLockService`, reloj
+  inyectable y testeado, incluido roundtrip por JSON).
+- Desbloqueo con Windows Hello si está disponible (verificado unpackaged:
+  `CheckAvailabilityAsync` = Available); el gate pide Hello y cae al PIN.
+- Puerta al arrancar (`MainWindow.OnFirstActivated`): sin desbloqueo se cierra.
+- Ajustes/Seguridad real: establecer, cambiar y desactivar PIN (con verificar
+  el actual), activar/desactivar Hello (exige Hello verificado) y sonda de
+  escritura al guardar ruta. Cifrado de archivos: diseñado para Fase 8B.

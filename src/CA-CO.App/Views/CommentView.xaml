@@ -16,13 +16,13 @@
             Width="32"
             Height="32"
             VerticalAlignment="Top"
-            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            Background="{ThemeResource CacoTintNotebooksBrush}"
             CornerRadius="16">
             <FontIcon
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 FontSize="14"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Foreground="{ThemeResource CacoTintForegroundBrush}"
                 Glyph="&#xE77B;" />
         </Border>
         <StackPanel

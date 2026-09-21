@@ -29,6 +29,28 @@ public sealed partial class DocumentsPage : DocumentsPageBase
         }
     }
 
+    /// <summary>Buscar al pulsar Enter (más rápido que ir al botón).</summary>
+    private void SearchBox_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter && ViewModel.SearchCommand.CanExecute(null))
+        {
+            ViewModel.SearchCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>Quita todos los filtros y vuelve a la biblioteca completa.</summary>
+    private void ClearSearch_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.SearchText = string.Empty;
+        ViewModel.SearchTypeIndex = 0;
+        ViewModel.SearchFavoritesOnly = false;
+        if (ViewModel.SearchCommand.CanExecute(null))
+        {
+            ViewModel.SearchCommand.Execute(null);
+        }
+    }
+
     private void DropArea_DragOver(object sender, DragEventArgs e)
     {
         e.AcceptedOperation = e.DataView.Contains(StandardDataFormats.StorageItems)

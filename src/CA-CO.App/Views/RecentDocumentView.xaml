@@ -23,13 +23,13 @@
             Width="44"
             Height="44"
             VerticalAlignment="Center"
-            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            Background="{ThemeResource CacoTintNotebooksBrush}"
             CornerRadius="12">
             <FontIcon
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 FontSize="22"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Foreground="{ThemeResource CacoTintForegroundBrush}"
                 Glyph="{x:Bind Glyph, Mode=OneWay}" />
         </Border>
 
